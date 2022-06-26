@@ -23,4 +23,5 @@ public:
     void clear();
     void setFramebuffer(const unsigned char *buffer);
     void sendMessage();
+    double getSystemTime();
 };
