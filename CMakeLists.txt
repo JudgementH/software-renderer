@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 set(CMAKE_TOOLCHAIN_FILE "E:/Program Files/vcpkg/scripts/buildsystems/vcpkg.cmake")
- 
+
 if(DEFINED ENV{VCPKG_DEFAULT_TRIPLET} AND NOT DEFINED VCPKG_TARGET_TRIPLET)
     set(VCPKG_TARGET_TRIPLET "$ENV{VCPKG_DEFAULT_TRIPLET}" CACHE STRING "")
 endif()
@@ -13,10 +13,21 @@ set(CMAKE_CXX_STANDARD 17)
 
 find_package(Eigen3 CONFIG REQUIRED)
 
-add_executable(${PROJECT_NAME}
-    src/main.cpp
-    src/gui/window.hpp
-    src/gui/window.cpp)
+file(GLOB_RECURSE SRC_FILES
+    "${PROJECT_SOURCE_DIR}/src/*.h" ,
+    "${PROJECT_SOURCE_DIR}/src/*.hpp" ,
+    "${PROJECT_SOURCE_DIR}/src/*.c" ,
+    "${PROJECT_SOURCE_DIR}/src/*.cpp")
+
+# add_executable(${PROJECT_NAME}
+# src/main.cpp
+# src/gui/window.hpp
+# src/gui/window.cpp
+# src/core/vertex.hpp
+# src/core/vertex.cpp
+# src/core/renderer.hpp
+# src/core/renderer.cpp)
+add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
 

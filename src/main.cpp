@@ -2,6 +2,8 @@
 #include <eigen3/Eigen/Eigen>
 
 #include "gui/window.hpp"
+#include "core/renderer.hpp"
+#include "shader/vertex_shader.hpp"
 
 int main()
 {
@@ -24,12 +26,36 @@ int main()
         }
     }
 
+    Rasterizer rasterizer(width, height);
+    VertexShader *vs = new NaiveVertexShader();
+    rasterizer.setVertexShader(vs);
+
+    std::vector<Vertex> vertices;
+
+    Eigen::Vector3f normal(0.0f, 0.0f, 0.1f);
+    Eigen::Vector4f color_R(1.0f, 0.0f, 0.0f, 1.0f);
+    Eigen::Vector4f color_G(0.0f, 1.0f, 0.0f, 1.0f);
+    Eigen::Vector4f color_B(0.0f, 0.0f, 1.0f, 1.0f);
+
+    vertices.emplace_back(Eigen::Vector4f(0.0f, 1.0f, 0.0f, 1.0f),
+                          color_R,
+                          normal);
+    vertices.emplace_back(Eigen::Vector4f(-0.5f, -0.5f, 0.0f, 1.0f),
+                          color_G,
+                          normal);
+    vertices.emplace_back(Eigen::Vector4f(0.5f, -0.5f, 0.0f, 1.0f),
+                          color_B,
+                          normal);
+
     Window window(width, height, title);
     int frames = 0;
     double print_time = window.getSystemTime();
     while (!window.is_close)
     {
         window.clear();
+
+        rasterizer.render(vertices);
+
         window.setFramebuffer(buffer_G);
         window.draw();
         window.sendMessage();
@@ -46,5 +72,7 @@ int main()
         frames++;
     }
 
+    delete vs;
+    delete[] buffer_G;
     return 0;
 }
