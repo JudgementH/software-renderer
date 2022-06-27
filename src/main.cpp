@@ -41,11 +41,12 @@ int main()
                           color_R,
                           normal);
     vertices.emplace_back(Eigen::Vector4f(-0.5f, -0.5f, 0.0f, 1.0f),
-                          color_G,
+                          color_R,
                           normal);
     vertices.emplace_back(Eigen::Vector4f(0.5f, -0.5f, 0.0f, 1.0f),
-                          color_B,
+                          color_R,
                           normal);
+
 
     Window window(width, height, title);
     int frames = 0;
@@ -54,9 +55,9 @@ int main()
     {
         window.clear();
 
-        rasterizer.render(vertices);
+        auto buffer =rasterizer.render(vertices);
 
-        window.setFramebuffer(buffer_G);
+        window.setFramebuffer(buffer);
         window.draw();
         window.sendMessage();
 

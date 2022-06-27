@@ -123,6 +123,27 @@ void Window::setFramebuffer(const unsigned char *buffer)
         }
     }
 }
+void Window::setFramebuffer(const std::vector<Eigen::Vector4f> &buffer, bool invertY)
+{
+    if (buffer.size() != width * height)
+    {
+        throw "缓冲大小和屏幕大小不匹配";
+    }
+    for (int i = 0; i < buffer.size(); i++)
+    {
+        int x = i % width;
+        int y = i / width;
+        if (invertY)
+        {
+            y = height - 1 - y;
+        }
+        int index = (x + width * y) * 4;
+        framebuffer[index] = static_cast<int>(buffer[i].z() * 255);     // B
+        framebuffer[index + 1] = static_cast<int>(buffer[i].y() * 255); // G
+        framebuffer[index + 2] = static_cast<int>(buffer[i].x() * 255); // R
+        framebuffer[index + 3] = static_cast<int>(buffer[i].w() * 255); // A
+    }
+}
 
 void Window::sendMessage()
 {

@@ -1,5 +1,6 @@
 #include "renderer.hpp"
 #include "utils.hpp"
+#include <iostream>
 
 Rasterizer::Rasterizer(int width, int height) : width(width), height(height)
 {
@@ -20,7 +21,7 @@ Rasterizer::~Rasterizer()
     }
 }
 
-std::vector<Eigen::Vector4i> &Rasterizer::render(std::vector<Vertex> &vertices)
+std::vector<Eigen::Vector4f> &Rasterizer::render(std::vector<Vertex> &vertices)
 {
     if (vertices.size() != 3)
     {
@@ -41,6 +42,7 @@ std::vector<Eigen::Vector4i> &Rasterizer::render(std::vector<Vertex> &vertices)
     for (auto &v : res_vertices)
     {
         v.position = viewPortMatrix * v.position;
+        setPixel(v.position.x(), v.position.y(), v.color);
     }
 
     return framebuffer;
@@ -49,4 +51,28 @@ std::vector<Eigen::Vector4i> &Rasterizer::render(std::vector<Vertex> &vertices)
 void Rasterizer::setVertexShader(VertexShader *vs)
 {
     vertexshader = vs;
+}
+
+void Rasterizer::clearFrameBuffer()
+{
+    std::fill(framebuffer.begin(), framebuffer.end(), Eigen::Vector4f(0, 0, 0, 0));
+}
+
+void Rasterizer::clearDepthBuffer()
+{
+    std::fill(depthBuffer.begin(), depthBuffer.end(), std::numeric_limits<float>::infinity());
+}
+
+void Rasterizer::setPixel(int x, int y, Eigen::Vector4f color)
+{
+    x = (x == width) ? x - 1 : x;
+    y = (y == height) ? y - 1 : y;
+    if (x < 0 || x >= width || y < 0 || y >= height)
+    {
+
+        std::cout << "OutOfRange\n";
+        throw std::exception();
+    }
+    int index = x + y * width;
+    framebuffer[index] = color;
 }
