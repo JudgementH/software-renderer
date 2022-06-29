@@ -20,7 +20,7 @@ public:
     std::vector<Eigen::Vector4f> framebuffer;
     std::vector<float> depthBuffer;
 
-    VertexShader* vertexshader;
+    VertexShader *vertexshader;
 
     Eigen::Matrix4f viewPortMatrix; // NDC to screen space
 
@@ -28,6 +28,8 @@ public:
     ~Rasterizer();
 
     std::vector<Eigen::Vector4f> &render(std::vector<Vertex> &vertices);
+    void drawLine(int x0, int y0, int x1, int y1, Eigen::Vector4f color);
+
     void setVertexShader(VertexShader *vs);
     void clearFrameBuffer();
     void clearDepthBuffer();

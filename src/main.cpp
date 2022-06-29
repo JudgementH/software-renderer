@@ -41,12 +41,11 @@ int main()
                           color_R,
                           normal);
     vertices.emplace_back(Eigen::Vector4f(-0.5f, -0.5f, 0.0f, 1.0f),
-                          color_R,
+                          color_G,
                           normal);
     vertices.emplace_back(Eigen::Vector4f(0.5f, -0.5f, 0.0f, 1.0f),
-                          color_R,
+                          color_B,
                           normal);
-
 
     Window window(width, height, title);
     int frames = 0;
@@ -55,7 +54,7 @@ int main()
     {
         window.clear();
 
-        auto buffer =rasterizer.render(vertices);
+        auto buffer = rasterizer.render(vertices);
 
         window.setFramebuffer(buffer);
         window.draw();
@@ -65,7 +64,6 @@ int main()
         double current_time = window.getSystemTime();
         if (current_time - print_time > 1.0)
         {
-
             std::cout << "FPS: " << frames << std::endl;
             frames = 0;
             print_time = current_time;
