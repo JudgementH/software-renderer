@@ -1,6 +1,4 @@
 #include "renderer.hpp"
-#include "utils.hpp"
-#include <iostream>
 
 Rasterizer::Rasterizer(int width, int height) : width(width), height(height)
 {
@@ -23,32 +21,18 @@ Rasterizer::~Rasterizer()
 
 std::vector<Eigen::Vector4f> &Rasterizer::render(std::vector<Vertex> &vertices)
 {
-    if (vertices.size() != 3)
+    if (vertices.size() % 3 != 0)
     {
-        throw "目前只支持画一个三角形";
+        throw "目前只支持绘制三角形";
     }
     if (vertexshader == nullptr)
     {
-        throw "目前只支持画一个三角形";
+        throw "没有VertexShader";
     }
-
-    std::vector<Vertex> res_vertices;
-    for (auto &v : vertices)
+    for (int i = 0; i < vertices.size(); i += 3)
     {
-        res_vertices.emplace_back(vertexshader->shade(v));
-    }
-
-    // view port transform
-    for (auto &v : res_vertices)
-    {
-        v.position = viewPortMatrix * v.position;
-    }
-
-    for (int i = 0; i < res_vertices.size(); i++)
-    {
-        Vertex v0 = res_vertices[i];
-        Vertex v1 = res_vertices[(i + 1) % 3];
-        drawLine(v0.position.x(), v0.position.y(), v1.position.x(), v1.position.y(), v0.color);
+        Triangle tri(vertices[i], vertices[i + 1], vertices[i + 2]);
+        drawTriangle(tri);
     }
 
     return framebuffer;
@@ -87,14 +71,13 @@ void Rasterizer::setPixel(int x, int y, Eigen::Vector4f color)
     framebuffer[index] = color;
 }
 
-void Rasterizer::drawLine(int x0, int y0, int x1, int y1, Eigen::Vector4f color)
+void Rasterizer::drawLine(int x0, int y0, int x1, int y1, const Eigen::Vector4f color)
 {
     /**
      * @brief Bresenham’s 直线算法
      *
      */
 
-    
     // k [+-1, +-infty] to [0, +-1]
     bool steep = false;
     if (std::abs(x0 - x1) < std::abs(y0 - y1))
@@ -150,5 +133,32 @@ void Rasterizer::drawLine(int x0, int y0, int x1, int y1, Eigen::Vector4f color)
                 error -= dx;
             }
         }
+    }
+}
+
+void Rasterizer::drawTriangle(const Triangle triangle)
+{
+    if (vertexshader == nullptr)
+    {
+        throw "没有VertexShader";
+    }
+
+    std::vector<Vertex> res_vertices;
+    for (auto &v : triangle.vertices)
+    {
+        res_vertices.emplace_back(vertexshader->shade(v));
+    }
+
+    // view port transform
+    for (auto &v : res_vertices)
+    {
+        v.position = viewPortMatrix * v.position;
+    }
+
+    for (int i = 0; i < res_vertices.size(); i++)
+    {
+        Vertex v0 = res_vertices[i];
+        Vertex v1 = res_vertices[(i + 1) % 3];
+        drawLine(v0.position.x(), v0.position.y(), v1.position.x(), v1.position.y(), v0.color);
     }
 }

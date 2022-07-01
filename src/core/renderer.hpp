@@ -1,8 +1,11 @@
 #pragma once
 
 #include <Eigen/Eigen>
+#include <iostream>
 #include "vertex.hpp"
 #include "shader.hpp"
+#include "triangle.hpp"
+#include "utils.hpp"
 
 class Renderer
 {
@@ -28,7 +31,8 @@ public:
     ~Rasterizer();
 
     std::vector<Eigen::Vector4f> &render(std::vector<Vertex> &vertices);
-    void drawLine(int x0, int y0, int x1, int y1, Eigen::Vector4f color);
+    void drawLine(int x0, int y0, int x1, int y1,const Eigen::Vector4f color);
+    void drawTriangle(const Triangle triangle);
 
     void setVertexShader(VertexShader *vs);
     void clearFrameBuffer();

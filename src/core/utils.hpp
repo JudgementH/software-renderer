@@ -1,10 +1,11 @@
 #pragma once
 #include <Eigen/Eigen>
+#include <string>
+#include <iostream>
 
 namespace math
 {
-
-    Eigen::Matrix4f GetViewPortMatrix(int screenWidth, int screenHeight)
+    static Eigen::Matrix4f GetViewPortMatrix(int screenWidth, int screenHeight)
     {
         /**
          * @brief set the viewPortMatrix, which transform NDC space to scene space.

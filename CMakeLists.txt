@@ -5,13 +5,15 @@ if(DEFINED ENV{VCPKG_DEFAULT_TRIPLET} AND NOT DEFINED VCPKG_TARGET_TRIPLET)
     set(VCPKG_TARGET_TRIPLET "$ENV{VCPKG_DEFAULT_TRIPLET}" CACHE STRING "")
 endif()
 
-include_directories("E:/Program Files/vcpkg/installed/x64-windows/include")
+# include_directories("E:/Program Files/vcpkg/installed/x64-windows/include")
+set(tinyobjloader_DIR "E:/Program Files/vcpkg/installed/x64-windows/share/tinyobjloader")
 
 project(software_renderer)
 
 set(CMAKE_CXX_STANDARD 17)
 
 find_package(Eigen3 CONFIG REQUIRED)
+find_package(tinyobjloader CONFIG REQUIRED)
 
 file(GLOB_RECURSE SRC_FILES
     "${PROJECT_SOURCE_DIR}/src/*.h" ,
@@ -30,6 +32,7 @@ file(GLOB_RECURSE SRC_FILES
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
+target_link_libraries(${PROJECT_NAME} PRIVATE tinyobjloader::tinyobjloader)
 
 add_custom_command(
     TARGET ${CMAKE_PROJECT_NAME}

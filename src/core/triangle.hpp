@@ -4,6 +4,7 @@
 class Triangle
 {
 public:
-    Vertex v0, v1, v2;
-    
+    Vertex vertices[3];
+
+    Triangle(Vertex v0, Vertex v1, Vertex v2);
 };

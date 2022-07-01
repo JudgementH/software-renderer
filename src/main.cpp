@@ -1,9 +1,12 @@
 #include <iostream>
 #include <eigen3/Eigen/Eigen>
 
-#include "gui/window.hpp"
+#include "core/utils.hpp"
+#include "core/model.hpp"
 #include "core/renderer.hpp"
+#include "gui/window.hpp"
 #include "shader/vertex_shader.hpp"
+#include "loader/obj_loader.hpp"
 
 int main()
 {
@@ -12,40 +15,35 @@ int main()
     const char *title = "Software-renderer";
 
     std::string obj_file_path = "models/spot/spot_triangulated_good.obj";
+    // std::string obj_file_path = "models/bunny/bunny.obj";
 
-    unsigned char *buffer_G = (unsigned char *)malloc(sizeof(unsigned char) * width * height * 4);
-    for (int j = 0; j < height; j++)
-    {
-        for (int i = 0; i < width; i++)
-        {
-            int index = (j * width + i) * 4;
-            buffer_G[index] = 0;
-            buffer_G[index + 1] = 255;
-            buffer_G[index + 2] = 0;
-            buffer_G[index + 3] = 0;
-        }
-    }
+    // loader::OBJLoader l(obj_file_path);
+    Model model(obj_file_path);
+    auto allTri = model.allVertices;
 
     Rasterizer rasterizer(width, height);
     VertexShader *vs = new NaiveVertexShader();
     rasterizer.setVertexShader(vs);
 
-    std::vector<Vertex> vertices;
+    if (false)
+    {
+        std::vector<Vertex> vertices;
 
-    Eigen::Vector3f normal(0.0f, 0.0f, 0.1f);
-    Eigen::Vector4f color_R(1.0f, 0.0f, 0.0f, 1.0f);
-    Eigen::Vector4f color_G(0.0f, 1.0f, 0.0f, 1.0f);
-    Eigen::Vector4f color_B(0.0f, 0.0f, 1.0f, 1.0f);
+        Eigen::Vector3f normal(0.0f, 0.0f, 0.1f);
+        Eigen::Vector4f color_R(1.0f, 0.0f, 0.0f, 1.0f);
+        Eigen::Vector4f color_G(0.0f, 1.0f, 0.0f, 1.0f);
+        Eigen::Vector4f color_B(0.0f, 0.0f, 1.0f, 1.0f);
 
-    vertices.emplace_back(Eigen::Vector4f(0.0f, 1.0f, 0.0f, 1.0f),
-                          color_R,
-                          normal);
-    vertices.emplace_back(Eigen::Vector4f(-0.5f, -0.5f, 0.0f, 1.0f),
-                          color_G,
-                          normal);
-    vertices.emplace_back(Eigen::Vector4f(0.5f, -0.5f, 0.0f, 1.0f),
-                          color_B,
-                          normal);
+        vertices.emplace_back(Eigen::Vector4f(0.0f, 1.0f, 0.0f, 1.0f),
+                              color_R,
+                              normal);
+        vertices.emplace_back(Eigen::Vector4f(-0.5f, -0.5f, 0.0f, 1.0f),
+                              color_G,
+                              normal);
+        vertices.emplace_back(Eigen::Vector4f(0.5f, -0.5f, 0.0f, 1.0f),
+                              color_B,
+                              normal);
+    }
 
     Window window(width, height, title);
     int frames = 0;
@@ -54,7 +52,7 @@ int main()
     {
         window.clear();
 
-        auto buffer = rasterizer.render(vertices);
+        auto buffer = rasterizer.render(allTri);
 
         window.setFramebuffer(buffer);
         window.draw();
@@ -72,6 +70,5 @@ int main()
     }
 
     delete vs;
-    delete[] buffer_G;
     return 0;
 }
