@@ -13,10 +13,6 @@ Rasterizer::Rasterizer(int width, int height) : width(width), height(height)
 
 Rasterizer::~Rasterizer()
 {
-    if (vertexshader != nullptr)
-    {
-        delete vertexshader;
-    }
 }
 
 std::vector<Eigen::Vector4f> &Rasterizer::render(std::vector<Vertex> &vertices)
@@ -29,18 +25,66 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(std::vector<Vertex> &vertices)
     {
         throw "没有VertexShader";
     }
-    for (int i = 0; i < vertices.size(); i += 3)
+    if (renderMode == RenderMode::VERTEX)
     {
-        Triangle tri(vertices[i], vertices[i + 1], vertices[i + 2]);
-        drawTriangle(tri);
+        renderVertex(vertices);
+    }
+    else if (renderMode == RenderMode::EDGE)
+    {
+        renderEdge(vertices);
     }
 
     return framebuffer;
 }
 
-void Rasterizer::setVertexShader(VertexShader *vs)
+void Rasterizer::renderVertex(std::vector<Vertex> &vertices)
 {
-    vertexshader = vs;
+    for (int i = 0; i < vertices.size(); i++)
+    {
+
+        std::vector<Vertex> res_vertices;
+
+        res_vertices.emplace_back(vertexshader->shade(vertices[i]));
+
+        // view port transform
+        for (auto &v : res_vertices)
+        {
+            v.position = viewPortMatrix * v.position;
+            setPixel(v.position.x(), v.position.y(), v.color);
+        }
+    }
+}
+
+void Rasterizer::renderEdge(std::vector<Vertex> &vertices)
+{
+    for (int i = 0; i < vertices.size(); i += 3)
+    {
+        Triangle tri(vertices[i], vertices[i + 1], vertices[i + 2]);
+
+        std::vector<Vertex> res_vertices;
+        for (auto &v : tri.vertices)
+        {
+            res_vertices.emplace_back(vertexshader->shade(v));
+        }
+
+        // view port transform
+        for (auto &v : res_vertices)
+        {
+            v.position = viewPortMatrix * v.position;
+        }
+
+        for (int i = 0; i < res_vertices.size(); i++)
+        {
+            Vertex v0 = res_vertices[i];
+            Vertex v1 = res_vertices[(i + 1) % 3];
+            drawLine(v0.position.x(), v0.position.y(), v1.position.x(), v1.position.y(), v0.color);
+        }
+    }
+}
+
+void Rasterizer::setVertexShader(std::unique_ptr<VertexShader> &vs)
+{
+    vertexshader = std::move(vs);
 }
 
 void Rasterizer::clearFrameBuffer()
@@ -136,29 +180,7 @@ void Rasterizer::drawLine(int x0, int y0, int x1, int y1, const Eigen::Vector4f 
     }
 }
 
-void Rasterizer::drawTriangle(const Triangle triangle)
+void Rasterizer::setRenderMode(RenderMode mode)
 {
-    if (vertexshader == nullptr)
-    {
-        throw "没有VertexShader";
-    }
-
-    std::vector<Vertex> res_vertices;
-    for (auto &v : triangle.vertices)
-    {
-        res_vertices.emplace_back(vertexshader->shade(v));
-    }
-
-    // view port transform
-    for (auto &v : res_vertices)
-    {
-        v.position = viewPortMatrix * v.position;
-    }
-
-    for (int i = 0; i < res_vertices.size(); i++)
-    {
-        Vertex v0 = res_vertices[i];
-        Vertex v1 = res_vertices[(i + 1) % 3];
-        drawLine(v0.position.x(), v0.position.y(), v1.position.x(), v1.position.y(), v0.color);
-    }
+    renderMode = mode;
 }

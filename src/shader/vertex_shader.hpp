@@ -13,7 +13,6 @@ public:
     NaiveVertexShader(Eigen::Matrix4f model = Eigen::Matrix4f::Identity(),
                       Eigen::Matrix4f view = Eigen::Matrix4f::Identity(),
                       Eigen::Matrix4f project = Eigen::Matrix4f::Identity());
-    ~NaiveVertexShader();
 
     Vertex shade(const Vertex &vertex);
 

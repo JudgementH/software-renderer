@@ -1,5 +1,6 @@
 #include <iostream>
 #include <eigen3/Eigen/Eigen>
+#include <memory>
 
 #include "core/utils.hpp"
 #include "core/model.hpp"
@@ -22,7 +23,8 @@ int main()
     auto allTri = model.allVertices;
 
     Rasterizer rasterizer(width, height);
-    VertexShader *vs = new NaiveVertexShader();
+    rasterizer.setRenderMode(RenderMode::VERTEX);
+    std::unique_ptr<VertexShader> vs = std::make_unique<NaiveVertexShader>();
     rasterizer.setVertexShader(vs);
 
     if (false)
@@ -69,6 +71,5 @@ int main()
         frames++;
     }
 
-    delete vs;
     return 0;
 }

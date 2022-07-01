@@ -22,13 +22,8 @@ file(GLOB_RECURSE SRC_FILES
     "${PROJECT_SOURCE_DIR}/src/*.cpp")
 
 # add_executable(${PROJECT_NAME}
-# src/main.cpp
-# src/gui/window.hpp
-# src/gui/window.cpp
-# src/core/vertex.hpp
-# src/core/vertex.cpp
-# src/core/renderer.hpp
-# src/core/renderer.cpp)
+# src/main.cpp)
+
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
