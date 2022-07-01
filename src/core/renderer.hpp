@@ -32,7 +32,7 @@ public:
     std::vector<Eigen::Vector4f> framebuffer;
     std::vector<float> depthBuffer;
 
-    std::unique_ptr<VertexShader> vertexshader;
+    std::unique_ptr<VertexShader> vertexShader;
 
     Eigen::Matrix4f viewPortMatrix; // NDC to screen space
 
@@ -42,6 +42,7 @@ public:
     std::vector<Eigen::Vector4f> &render(std::vector<Vertex> &vertices);
     void renderVertex(std::vector<Vertex> &vertices);
     void renderEdge(std::vector<Vertex> &vertices);
+    void renderFace(std::vector<Vertex> &vertices);
     
 
     void drawLine(int x0, int y0, int x1, int y1, const Eigen::Vector4f color);

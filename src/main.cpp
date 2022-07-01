@@ -15,7 +15,8 @@ int main()
     int height = 720;
     const char *title = "Software-renderer";
 
-    std::string obj_file_path = "models/spot/spot_triangulated_good.obj";
+    // std::string obj_file_path = "models/spot/spot_triangulated_good.obj";
+    std::string obj_file_path = "models/spot/spot_control_mesh.obj";
     // std::string obj_file_path = "models/bunny/bunny.obj";
 
     // loader::OBJLoader l(obj_file_path);
@@ -23,29 +24,9 @@ int main()
     auto allTri = model.allVertices;
 
     Rasterizer rasterizer(width, height);
-    rasterizer.setRenderMode(RenderMode::VERTEX);
+    rasterizer.setRenderMode(RenderMode::EDGE);
     std::unique_ptr<VertexShader> vs = std::make_unique<NaiveVertexShader>();
     rasterizer.setVertexShader(vs);
-
-    if (false)
-    {
-        std::vector<Vertex> vertices;
-
-        Eigen::Vector3f normal(0.0f, 0.0f, 0.1f);
-        Eigen::Vector4f color_R(1.0f, 0.0f, 0.0f, 1.0f);
-        Eigen::Vector4f color_G(0.0f, 1.0f, 0.0f, 1.0f);
-        Eigen::Vector4f color_B(0.0f, 0.0f, 1.0f, 1.0f);
-
-        vertices.emplace_back(Eigen::Vector4f(0.0f, 1.0f, 0.0f, 1.0f),
-                              color_R,
-                              normal);
-        vertices.emplace_back(Eigen::Vector4f(-0.5f, -0.5f, 0.0f, 1.0f),
-                              color_G,
-                              normal);
-        vertices.emplace_back(Eigen::Vector4f(0.5f, -0.5f, 0.0f, 1.0f),
-                              color_B,
-                              normal);
-    }
 
     Window window(width, height, title);
     int frames = 0;
