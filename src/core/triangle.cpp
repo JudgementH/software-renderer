@@ -33,3 +33,23 @@ bool Triangle::inside(float x, float y) const
     float sign3 = cp.cross(_v[0] - _v[2]).z();
     return (sign1 >= 0 && sign2 >= 0 && sign3 >= 0) || (sign1 <= 0 && sign2 <= 0 && sign3 <= 0);
 }
+
+std::tuple<float, float, float> Triangle::computeBarycentric2D(float x, float y)
+{
+    Eigen::Vector2f v[3];
+    for (int i = 0; i < 3; i++)
+    {
+        v[i] = vertices[i].position.head<2>();
+    }
+    float w0 = (x * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * y + v[1].x() * v[2].y() - v[2].x() * v[1].y()) /
+               (v[0].x() * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * v[0].y() + v[1].x() * v[2].y() -
+                v[2].x() * v[1].y());
+    float w1 = (x * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * y + v[2].x() * v[0].y() - v[0].x() * v[2].y()) /
+               (v[1].x() * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * v[1].y() + v[2].x() * v[0].y() -
+                v[0].x() * v[2].y());
+    // float w2 = (x * (v[0].y() - v[1].y()) + (v[1].x() - v[0].x()) * y + v[0].x() * v[1].y() - v[1].x() * v[0].y()) /
+    //            (v[2].x() * (v[0].y() - v[1].y()) + (v[1].x() - v[0].x()) * v[2].y() + v[0].x() * v[1].y() -
+    //             v[1].x() * v[0].y());
+    float w2 = 1.0f - w0 - w1;
+    return {w0, w1, w2};
+}

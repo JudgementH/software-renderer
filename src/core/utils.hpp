@@ -23,4 +23,10 @@ namespace math
         return ans;
     }
 
+    template <typename T>
+    T LinearLerp(T x1, T x2, const float &t)
+    {
+        return (1.0f - t) * x1 + t * x2;
+    }
+
 }

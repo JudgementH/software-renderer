@@ -11,5 +11,8 @@ public:
 
     Triangle(Vertex v0, Vertex v1, Vertex v2);
 
-    bool inside(float x,float y) const;
+    bool inside(float x, float y) const;
+
+    std::tuple<float, float, float> computeBarycentric2D(float x, float y);
+    
 };
