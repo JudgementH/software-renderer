@@ -20,7 +20,7 @@ Model::Model(const std::string filename)
                                                     shape.vertices[i + j].position.z,
                                                     1.0f);
                 }
-                
+
                 if (shape.has_normal)
                     for (int j = 0; j < 3; j++)
                     {

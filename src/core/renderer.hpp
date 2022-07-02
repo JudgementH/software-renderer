@@ -7,6 +7,7 @@
 #include "shader.hpp"
 #include "triangle.hpp"
 #include "utils.hpp"
+#include "payload.hpp"
 
 class Renderer
 {
@@ -24,15 +25,21 @@ enum class RenderMode
 
 class Rasterizer : Renderer
 {
+private:
+    void renderVertex(std::vector<Payload> &payloads);
+    void renderEdge(std::vector<Payload> &payloads);
+    void renderFace(std::vector<Payload> &payloads);
+
 public:
     RenderMode renderMode = RenderMode::EDGE;
     int width;
     int height;
     float aspect_ratio;
     std::vector<Eigen::Vector4f> framebuffer;
-    std::vector<float> depthBuffer;
+    std::vector<float> zBuffer;
 
     std::unique_ptr<VertexShader> vertexShader;
+    std::unique_ptr<FragmentShader> fragmentShader;
 
     Eigen::Matrix4f viewPortMatrix; // NDC to screen space
 
@@ -40,15 +47,14 @@ public:
     ~Rasterizer();
 
     std::vector<Eigen::Vector4f> &render(std::vector<Vertex> &vertices);
-    void renderVertex(std::vector<Vertex> &vertices);
-    void renderEdge(std::vector<Vertex> &vertices);
-    void renderFace(std::vector<Vertex> &vertices);
-    
 
     void drawLine(int x0, int y0, int x1, int y1, const Eigen::Vector4f color);
     void drawTriangle(const Triangle triangle);
+    void drawTriangle(const Payload &payload0, const Payload &payload1, const Payload &payload2);
 
     void setVertexShader(std::unique_ptr<VertexShader> &vs);
+    void setFragmentShader(std::unique_ptr<FragmentShader> &fs);
+
     void clearFrameBuffer();
     void clearDepthBuffer();
     void setPixel(int x, int y, Eigen::Vector4f color);

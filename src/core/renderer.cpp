@@ -1,14 +1,19 @@
 #include "renderer.hpp"
+#include "payload.hpp"
 
 Rasterizer::Rasterizer(int width, int height) : width(width), height(height)
 {
     aspect_ratio = static_cast<float>(width) / height;
     framebuffer.resize(width * height);
-    depthBuffer.resize(width * height);
+    zBuffer.resize(width * height);
+    std::fill(framebuffer.begin(), framebuffer.end(), Eigen::Vector4f(0, 0, 0, 0));
+    std::fill(zBuffer.begin(), zBuffer.end(), std::numeric_limits<float>::lowest());
 
     viewPortMatrix = math::GetViewPortMatrix(width, height);
 
-    // default vertex shader
+    // TODO: default vertex shader
+
+    // TODO: defalut fragment shader
 }
 
 Rasterizer::~Rasterizer()
@@ -17,6 +22,7 @@ Rasterizer::~Rasterizer()
 
 std::vector<Eigen::Vector4f> &Rasterizer::render(std::vector<Vertex> &vertices)
 {
+    // TODO: 有待添加重载方法 model
     if (vertices.size() % 3 != 0)
     {
         throw "目前只支持绘制三角形";
@@ -26,65 +32,78 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(std::vector<Vertex> &vertices)
         throw "没有VertexShader";
     }
 
-    std::vector<Vertex> ctx_v;
+    std::vector<Payload> payloads;
     for (auto &v : vertices)
     {
         auto temp_v = vertexShader->shade(v);
-        temp_v.position = viewPortMatrix * temp_v.position;
-        ctx_v.emplace_back(temp_v);
+        auto worldPos = temp_v.position;
+        auto windowPos = viewPortMatrix * temp_v.position;
+        auto normal = temp_v.normal;
+        auto color = temp_v.color;
+        payloads.emplace_back(worldPos, windowPos, color, normal);
     }
 
     if (renderMode == RenderMode::VERTEX)
     {
-        renderVertex(ctx_v);
+        renderVertex(payloads);
     }
     else if (renderMode == RenderMode::EDGE)
     {
-        renderEdge(ctx_v);
+
+        renderEdge(payloads);
     }
     else if (renderMode == RenderMode::FACE)
     {
-        renderFace(ctx_v);
+        renderFace(payloads);
     }
 
     return framebuffer;
 }
 
-void Rasterizer::renderVertex(std::vector<Vertex> &vertices)
+void Rasterizer::renderVertex(std::vector<Payload> &payloads)
 {
-    for (auto &v : vertices)
+    for (auto &p : payloads)
     {
-        setPixel(v.position.x(), v.position.y(), v.color);
+        setPixel(p.windowPos.x(), p.windowPos.y(), p.color);
     }
 }
 
-void Rasterizer::renderEdge(std::vector<Vertex> &vertices)
+void Rasterizer::renderEdge(std::vector<Payload> &payloads)
 {
-    for (int i = 0; i < vertices.size(); i += 3)
+    for (int i = 0; i < payloads.size(); i += 3)
     {
-        Triangle tri(vertices[i], vertices[i + 1], vertices[i + 2]);
-        auto tri_vertices = tri.vertices;
         for (int j = 0; j < 3; j++)
         {
-            Vertex v0 = tri_vertices[j];
-            Vertex v1 = tri_vertices[(j + 1) % 3];
-            drawLine(v0.position.x(), v0.position.y(), v1.position.x(), v1.position.y(), v0.color);
+            auto v0_pos = payloads[i + j].windowPos;
+            auto v1_pos = payloads[i + (j + 1) % 3].windowPos;
+            drawLine(v0_pos.x(), v0_pos.y(), v1_pos.x(), v1_pos.y(), payloads[i + j].color);
         }
     }
 }
 
-void Rasterizer::renderFace(std::vector<Vertex> &vertices)
+void Rasterizer::renderFace(std::vector<Payload> &payloads)
 {
-    for (int i = 0; i < vertices.size(); i += 3)
+    for (int i = 0; i < payloads.size(); i += 3)
     {
-        Triangle triangle(vertices[i], vertices[i + 1], vertices[i + 2]);
-        drawTriangle(triangle);
+        Vertex v[3];
+        for (int j = 0; j < 3; j++)
+        {
+            v[j] = Vertex(payloads[i + j].windowPos, payloads[i + j].color, payloads[i + j].normal);
+        }
+
+        Triangle triangle(v[0], v[1], v[2]);
+        drawTriangle(payloads[i], payloads[i + 1], payloads[i + 2]);
     }
 }
 
 void Rasterizer::setVertexShader(std::unique_ptr<VertexShader> &vs)
 {
     vertexShader = std::move(vs);
+}
+
+void Rasterizer::setFragmentShader(std::unique_ptr<FragmentShader> &fs)
+{
+    fragmentShader = std::move(fs);
 }
 
 void Rasterizer::clearFrameBuffer()
@@ -94,7 +113,7 @@ void Rasterizer::clearFrameBuffer()
 
 void Rasterizer::clearDepthBuffer()
 {
-    std::fill(depthBuffer.begin(), depthBuffer.end(), std::numeric_limits<float>::infinity());
+    std::fill(zBuffer.begin(), zBuffer.end(), std::numeric_limits<float>::lowest());
 }
 
 void Rasterizer::setPixel(int x, int y, Eigen::Vector4f color)
@@ -182,19 +201,62 @@ void Rasterizer::drawLine(int x0, int y0, int x1, int y1, const Eigen::Vector4f 
 
 void Rasterizer::drawTriangle(const Triangle triangle)
 {
+
+    // TODO: 目前为随机值，有待修改
+    Eigen::Vector4f color = (Eigen::Vector4f::Random() + Eigen::Vector4f::Ones()) / 2.0f;
+
     int boxMinX = triangle.boxMin.x();
     int boxMinY = triangle.boxMin.y();
 
     int boxMaxX = triangle.boxMax.x();
     int boxMaxY = triangle.boxMax.y();
 
-    for (int y = boxMinY; y < boxMaxY; y++)
+    for (int y = boxMinY; y <= boxMaxY; y++)
     {
-        for (int x = boxMinX; x < boxMaxX; x++)
+        for (int x = boxMinX; x <= boxMaxX; x++)
         {
             if (triangle.inside(x, y))
             {
-                setPixel(x, y, (Eigen::Vector4f::Random() + Eigen::Vector4f::Ones()) / 2.0f);
+                setPixel(x, y, color);
+            }
+        }
+    }
+}
+
+void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, const Payload &payload2)
+{
+    Triangle triangle(Vertex(payload0.windowPos, payload0.color, payload0.normal),
+                      Vertex(payload1.windowPos, payload1.color, payload1.normal),
+                      Vertex(payload2.windowPos, payload2.color, payload2.normal));
+
+    int boxMinX = int(triangle.boxMin.x());
+    int boxMaxX = int(triangle.boxMax.x());
+
+    int boxMinY = int(triangle.boxMin.y());
+    int boxMaxY = int(triangle.boxMax.y());
+
+    for (int y = boxMinY; y <= boxMaxY; y++)
+    {
+        for (int x = boxMinX; x <= boxMaxX; x++)
+        {
+            if (triangle.inside(x, y))
+            {
+                auto [w0, w1, w2] = triangle.computeBarycentric2D(x, y);
+                Payload p = w0 * payload0 + w1 * payload1 + w2 * payload2;
+                if (fragmentShader == nullptr)
+                {
+                    std::cout << "fragmentShader 为空" << std::endl;
+                    throw std::exception();
+                }
+
+                //深度测试
+                int index = x + y * width;
+                if (p.windowPos.z() > zBuffer[index])
+                {
+                    zBuffer[index] = p.windowPos.z();
+                    auto color = fragmentShader->shade(p);
+                    setPixel(x, y, color);
+                }
             }
         }
     }

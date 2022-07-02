@@ -7,6 +7,7 @@
 #include "core/renderer.hpp"
 #include "gui/window.hpp"
 #include "shader/vertex_shader.hpp"
+#include "shader/normal_fragment_shader.hpp"
 #include "loader/obj_loader.hpp"
 
 int main()
@@ -15,8 +16,8 @@ int main()
     int height = 720;
     const char *title = "Software-renderer";
 
-    // std::string obj_file_path = "models/spot/spot_triangulated_good.obj";
-    std::string obj_file_path = "models/spot/spot_control_mesh.obj";
+    std::string obj_file_path = "models/spot/spot_triangulated_good.obj";
+    // std::string obj_file_path = "models/spot/spot_control_mesh.obj";
     // std::string obj_file_path = "models/bunny/bunny.obj";
 
     // loader::OBJLoader l(obj_file_path);
@@ -24,9 +25,13 @@ int main()
     auto allTri = model.allVertices;
 
     Rasterizer rasterizer(width, height);
-    rasterizer.setRenderMode(RenderMode::EDGE);
+    rasterizer.setRenderMode(RenderMode::FACE);
+
     std::unique_ptr<VertexShader> vs = std::make_unique<NaiveVertexShader>();
     rasterizer.setVertexShader(vs);
+
+    std::unique_ptr<FragmentShader> fs = std::make_unique<NormalFragmentShader>();
+    rasterizer.setFragmentShader(fs);
 
     Window window(width, height, title);
     int frames = 0;
