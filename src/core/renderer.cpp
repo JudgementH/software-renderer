@@ -1,3 +1,4 @@
+#include <omp.h>
 #include "renderer.hpp"
 #include "payload.hpp"
 
@@ -35,11 +36,11 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(std::vector<Vertex> &vertices)
     std::vector<Payload> payloads;
     for (auto &v : vertices)
     {
-        auto temp_v = vertexShader->shade(v);
-        auto worldPos = temp_v.position;
-        auto windowPos = viewPortMatrix * temp_v.position;
-        auto normal = temp_v.normal;
-        auto color = temp_v.color;
+        Vertex temp_v = vertexShader->shade(v);
+        Eigen::Vector4f worldPos = temp_v.position;
+        Eigen::Vector4f windowPos = viewPortMatrix * temp_v.position;
+        Eigen::Vector3f normal = temp_v.normal;
+        Eigen::Vector4f color = temp_v.color;
         payloads.emplace_back(worldPos, windowPos, color, normal);
     }
 
@@ -85,13 +86,6 @@ void Rasterizer::renderFace(std::vector<Payload> &payloads)
 {
     for (int i = 0; i < payloads.size(); i += 3)
     {
-        Vertex v[3];
-        for (int j = 0; j < 3; j++)
-        {
-            v[j] = Vertex(payloads[i + j].windowPos, payloads[i + j].color, payloads[i + j].normal);
-        }
-
-        Triangle triangle(v[0], v[1], v[2]);
         drawTriangle(payloads[i], payloads[i + 1], payloads[i + 2]);
     }
 }
@@ -104,6 +98,16 @@ void Rasterizer::setVertexShader(std::unique_ptr<VertexShader> &vs)
 void Rasterizer::setFragmentShader(std::unique_ptr<FragmentShader> &fs)
 {
     fragmentShader = std::move(fs);
+}
+
+void Rasterizer::setViewMatrix(Eigen::Matrix4f &view)
+{
+    vertexShader->setViewMatrix(view);
+}
+
+void Rasterizer::setProjectMatrix(Eigen::Matrix4f &project)
+{
+    vertexShader->setProjectMatrix(project);
 }
 
 void Rasterizer::clearFrameBuffer()
@@ -235,10 +239,18 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
     int boxMinY = int(triangle.boxMin.y());
     int boxMaxY = int(triangle.boxMax.y());
 
+    boxMinX = std::clamp(boxMinX, 0, width);
+    boxMaxX = std::clamp(boxMaxX, 0, width);
+    boxMinY = std::clamp(boxMinY, 0, width);
+    boxMaxY = std::clamp(boxMaxY, 0, width);
+
+    // TODO: 并行化
     for (int y = boxMinY; y <= boxMaxY; y++)
     {
         for (int x = boxMinX; x <= boxMaxX; x++)
         {
+            // x = std::clamp(0, width - 1, x);
+            // y = std::clamp(0, height - 1, y);
             if (triangle.inside(x, y))
             {
                 auto [w0, w1, w2] = triangle.computeBarycentric2D(x, y);

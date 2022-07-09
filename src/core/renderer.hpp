@@ -54,6 +54,8 @@ public:
 
     void setVertexShader(std::unique_ptr<VertexShader> &vs);
     void setFragmentShader(std::unique_ptr<FragmentShader> &fs);
+    void setViewMatrix(Eigen::Matrix4f &view);
+    void setProjectMatrix(Eigen::Matrix4f &project);
 
     void clearFrameBuffer();
     void clearDepthBuffer();

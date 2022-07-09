@@ -1,10 +1,12 @@
 #include <iostream>
 #include <eigen3/Eigen/Eigen>
 #include <memory>
+#include <thread>
 
 #include "core/utils.hpp"
 #include "core/model.hpp"
 #include "core/renderer.hpp"
+#include "core/camera.hpp"
 #include "gui/window.hpp"
 #include "shader/vertex_shader.hpp"
 #include "shader/normal_fragment_shader.hpp"
@@ -14,13 +16,19 @@ int main()
 {
     int width = 1280;
     int height = 720;
-    const char *title = "Software-renderer";
+    std::string title = "Software-renderer";
+    Window window(width, height, title);
+
+    Eigen::Vector3f pos(0.4f, 0.5f, 2.0f);
+    Eigen::Vector3f lookat(0.0f, 0.0f, 0.0f);
+    Eigen::Vector3f up(0.0f, 1.0f, 0.0f);
+    float fov = 60.0f;
+    Camera camera(&window, pos, lookat, up, fov);
 
     std::string obj_file_path = "models/spot/spot_triangulated_good.obj";
     // std::string obj_file_path = "models/spot/spot_control_mesh.obj";
     // std::string obj_file_path = "models/bunny/bunny.obj";
 
-    // loader::OBJLoader l(obj_file_path);
     Model model(obj_file_path);
     auto allTri = model.allVertices;
 
@@ -33,28 +41,23 @@ int main()
     std::unique_ptr<FragmentShader> fs = std::make_unique<NormalFragmentShader>();
     rasterizer.setFragmentShader(fs);
 
-    Window window(width, height, title);
-    int frames = 0;
-    double print_time = window.getSystemTime();
     while (!window.is_close)
     {
         window.clear();
+        rasterizer.clearDepthBuffer();
+        rasterizer.clearFrameBuffer();
+
+        auto view = camera.getViewMatrix();
+        rasterizer.setViewMatrix(view);
+
+        auto project = camera.getPerspectiveMatrix();
+        rasterizer.setProjectMatrix(project);
 
         auto buffer = rasterizer.render(allTri);
 
         window.setFramebuffer(buffer);
         window.draw();
         window.sendMessage();
-
-        // print FPS
-        double current_time = window.getSystemTime();
-        if (current_time - print_time > 1.0)
-        {
-            std::cout << "FPS: " << frames << std::endl;
-            frames = 0;
-            print_time = current_time;
-        }
-        frames++;
     }
 
     return 0;

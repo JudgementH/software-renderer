@@ -5,6 +5,18 @@
 
 namespace math
 {
+    const float PI = 3.141592653589793;
+
+    inline float Radian2Degree(float randian)
+    {
+        return randian * 180 / PI;
+    }
+
+    inline float Degree2Radian(float degree)
+    {
+        return degree * PI / 180;
+    }
+
     static Eigen::Matrix4f GetViewPortMatrix(int screenWidth, int screenHeight)
     {
         /**

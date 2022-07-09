@@ -1,4 +1,6 @@
 #include <iostream>
+#include <thread>
+#include <mutex>
 #include "window.hpp"
 
 LRESULT WINAPI msg_callback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -9,9 +11,18 @@ LRESULT WINAPI msg_callback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return DefWindowProc(hWnd, msg, wParam, lParam);
     switch (msg)
     {
+    case WM_MOUSEMOVE:
+    {
+        window->mouseHandler(int(wParam), int(LOWORD(lParam)), int(HIWORD(lParam)));
+        break;
+    }
+    case WM_CHAR:
+    {
+        window->keyHandler(int(wParam));
+        break;
+    }
     case WM_CLOSE:
     {
-
         window->is_close = true;
         break;
     }
@@ -22,7 +33,7 @@ LRESULT WINAPI msg_callback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-Window::Window(int width, int height, const char *title) : width(width), height(height), title(title), is_close(false)
+Window::Window(int width, int height, std::string title) : width(width), height(height), title(title), is_close(false)
 {
     WNDCLASSEX wndClass;
     wndClass.cbSize = sizeof(WNDCLASSEX);
@@ -39,7 +50,7 @@ Window::Window(int width, int height, const char *title) : width(width), height(
     wndClass.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
 
     RegisterClassEx(&wndClass);
-    wnd = CreateWindow(wndClassName, title, WS_OVERLAPPEDWINDOW,
+    wnd = CreateWindow(wndClassName, title.c_str(), WS_OVERLAPPEDWINDOW,
                        CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, NULL, NULL, wndClass.hInstance, NULL);
 
     SetProp(wnd, "currentWindow", this);
@@ -73,6 +84,20 @@ Window::Window(int width, int height, const char *title) : width(width), height(
     SetForegroundWindow(wnd);
 
     ShowWindow(wnd, SW_NORMAL);
+
+    if (showFPS)
+    {
+        std::thread([this, title]() -> void
+                    {
+                    frames = 0;
+                    while(true){
+                        Sleep(1000);
+                        std::string fps = " FPS: " +   std::to_string(frames);
+                        frames=0;
+                        setTitle(title + fps);
+                    } })
+            .detach();
+    }
 }
 
 Window::~Window()
@@ -97,6 +122,7 @@ Window::~Window()
 
 void Window::draw()
 {
+    frames++;
     BitBlt(hdc, 0, 0, width, height, mdc, 0, 0, SRCCOPY);
 }
 
@@ -167,4 +193,20 @@ double Window::getSystemTime()
     }
     QueryPerformanceCounter(&counter);
     return counter.QuadPart * period;
+}
+
+void Window::setTitle(std::string title)
+{
+    this->title = title;
+    SetWindowText(wnd, title.c_str());
+}
+
+void Window::setKeyHandler(std::function<void(int)> handler)
+{
+    keyHandler = handler;
+}
+
+void Window::setMouseHandler(std::function<void(int, int, int)> handler)
+{
+    mouseHandler = handler;
 }
