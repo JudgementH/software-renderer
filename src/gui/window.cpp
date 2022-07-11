@@ -98,6 +98,8 @@ Window::Window(int width, int height, std::string title) : width(width), height(
                     } })
             .detach();
     }
+    // hide the cursor
+    // ShowCursor(false);
 }
 
 Window::~Window()
@@ -209,4 +211,11 @@ void Window::setKeyHandler(std::function<void(int)> handler)
 void Window::setMouseHandler(std::function<void(int, int, int)> handler)
 {
     mouseHandler = handler;
+}
+
+void Window::setCursorPosition(int x, int y)
+{
+    POINT p = {x, y};
+    ClientToScreen(wnd, &p);
+    SetCursorPos(p.x, p.y);
 }

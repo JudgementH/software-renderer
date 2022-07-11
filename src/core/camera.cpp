@@ -30,14 +30,11 @@ Camera::Camera(Window *window,
   // FPS camera
   Eigen::Vector3f cameraZToXOZ = Eigen::Vector3f(z.x(), 0.0f, z.z()).normalized();
 
-  float pitch_cos = z.dot(cameraZToXOZ);
-  pitch_cos = max(-1.0f, min(1.0f, pitch_cos));
-  pitch = math::Radian2Degree(acos(pitch_cos)); // the included angle between cameraZ and cameraZ_xoz_projection
+  float pitch_sin = z.y();
+  pitch_sin = max(-1.0f, min(1.0f, pitch_sin));
+  pitch = math::Radian2Degree(asin(pitch_sin)); // the included angle between cameraZ and cameraZ_xoz_projection
 
-  Eigen::Vector3f worldZ(0.0f, 0.0f, 1.0f);
-  float yaw_cos = worldZ.dot(cameraZToXOZ);
-  yaw_cos = max(-1.0f, min(1.0f, yaw_cos));
-  yaw = math::Radian2Degree(acos(yaw_cos)); // the included angle between worldZ and cameraZ
+  yaw = math::Radian2Degree(atan2(cameraZToXOZ.x(), cameraZToXOZ.z())); // the included angle between worldZ and cameraZ
 }
 
 void Camera::update()
@@ -105,7 +102,14 @@ void Camera::rotatePitch(float angle)
 void Camera::rotateYaw(float angle)
 {
   yaw += angle;
-  yaw = min(360.0f, max(0.0f, yaw));
+  if (yaw < 0.0)
+  {
+    yaw += 360;
+  }
+  if (yaw > 360.0)
+  {
+    yaw -= 360;
+  }
   updateXYZ();
 }
 
@@ -125,23 +129,33 @@ void Camera::keyHnadle(int param)
   // std::cout << "pressed: " << param << std::endl;
   if (param == int('w'))
   {
-    moveForward(moveSpeed);
+    moveForward(keySensitivity);
   }
   else if (param == int('a'))
   {
-    moveRight(-moveSpeed);
+    moveRight(-keySensitivity);
   }
   else if (param == int('s'))
   {
-    moveForward(-moveSpeed);
+    moveForward(-keySensitivity);
   }
   else if (param == int('d'))
   {
-    moveRight(moveSpeed);
+    moveRight(keySensitivity);
   }
 }
 
 void Camera::mouseHandle(int param, int x, int y)
 {
   // printf("param: %d, x=%d, y=%d\n", param, x, y);
+  // 按住左键移动
+  int centerX = window->width / 2.0f;
+  int centerY = window->height / 2.0f;
+  int dx = x - centerX;
+  int dy = centerY - y;
+  printf("dx=%d, dy=%d\n", dx, dy);
+  rotatePitch(-dy * mouseSensitivity);
+  rotateYaw(-dx * mouseSensitivity);
+  printf("pitch=%f, yaw=%f\n", pitch, yaw);
+  window->setCursorPosition(centerX, centerY);
 }

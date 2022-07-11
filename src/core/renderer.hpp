@@ -30,6 +30,9 @@ private:
     void renderEdge(std::vector<Payload> &payloads);
     void renderFace(std::vector<Payload> &payloads);
 
+    float getDepth(const int &x, const int &y);
+    void setDepth(const int &x, const int &y, const float &depth);
+
 public:
     RenderMode renderMode = RenderMode::EDGE;
     int width;

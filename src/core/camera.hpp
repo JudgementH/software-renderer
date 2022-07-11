@@ -26,8 +26,8 @@ public:
     float pitch;
     float yaw;
 
-    float moveSpeed = 0.1f;
-    float rotateSpeed = 1.0f;
+    float keySensitivity = 0.1f;
+    float mouseSensitivity = 0.05f;
 
     Camera(Window *window,
            Eigen::Vector3f position,

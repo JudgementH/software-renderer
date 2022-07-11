@@ -20,6 +20,7 @@ int main()
     Window window(width, height, title);
 
     Eigen::Vector3f pos(0.4f, 0.5f, 2.0f);
+    // Eigen::Vector3f lookat(0.8f, 0.5f, 4.0f);
     Eigen::Vector3f lookat(0.0f, 0.0f, 0.0f);
     Eigen::Vector3f up(0.0f, 1.0f, 0.0f);
     float fov = 60.0f;
@@ -46,6 +47,8 @@ int main()
         window.clear();
         rasterizer.clearDepthBuffer();
         rasterizer.clearFrameBuffer();
+
+        // camera.update();
 
         auto view = camera.getViewMatrix();
         rasterizer.setViewMatrix(view);

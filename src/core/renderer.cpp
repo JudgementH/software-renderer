@@ -8,7 +8,7 @@ Rasterizer::Rasterizer(int width, int height) : width(width), height(height)
     framebuffer.resize(width * height);
     zBuffer.resize(width * height);
     std::fill(framebuffer.begin(), framebuffer.end(), Eigen::Vector4f(0, 0, 0, 0));
-    std::fill(zBuffer.begin(), zBuffer.end(), std::numeric_limits<float>::lowest());
+    std::fill(zBuffer.begin(), zBuffer.end(), -1.0f);
 
     viewPortMatrix = math::GetViewPortMatrix(width, height);
 
@@ -37,6 +37,7 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(std::vector<Vertex> &vertices)
     for (auto &v : vertices)
     {
         Vertex temp_v = vertexShader->shade(v);
+        temp_v.position /= temp_v.position.w();
         Eigen::Vector4f worldPos = temp_v.position;
         Eigen::Vector4f windowPos = viewPortMatrix * temp_v.position;
         Eigen::Vector3f normal = temp_v.normal;
@@ -117,7 +118,7 @@ void Rasterizer::clearFrameBuffer()
 
 void Rasterizer::clearDepthBuffer()
 {
-    std::fill(zBuffer.begin(), zBuffer.end(), std::numeric_limits<float>::lowest());
+    std::fill(zBuffer.begin(), zBuffer.end(), -1.0f);
 }
 
 void Rasterizer::setPixel(int x, int y, Eigen::Vector4f color)
@@ -131,7 +132,7 @@ void Rasterizer::setPixel(int x, int y, Eigen::Vector4f color)
     if (x < 0 || x >= width || y < 0 || y >= height)
     {
 
-        std::cout << "OutOfRange\n";
+        std::cout << "My Exception OutOfRange\n";
         throw std::exception();
     }
     int index = x + y * width;
@@ -239,18 +240,18 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
     int boxMinY = int(triangle.boxMin.y());
     int boxMaxY = int(triangle.boxMax.y());
 
-    boxMinX = std::clamp(boxMinX, 0, width);
-    boxMaxX = std::clamp(boxMaxX, 0, width);
-    boxMinY = std::clamp(boxMinY, 0, width);
-    boxMaxY = std::clamp(boxMaxY, 0, width);
+    boxMinX = std::clamp(boxMinX, 0, width - 1);
+    boxMaxX = std::clamp(boxMaxX, 0, width - 1);
+    boxMinY = std::clamp(boxMinY, 0, height - 1);
+    boxMaxY = std::clamp(boxMaxY, 0, height - 1);
 
-    // TODO: 并行化
+    // TODO: 并行化 最后深度测试
+    // TODO: 背面
     for (int y = boxMinY; y <= boxMaxY; y++)
     {
         for (int x = boxMinX; x <= boxMaxX; x++)
         {
-            // x = std::clamp(0, width - 1, x);
-            // y = std::clamp(0, height - 1, y);
+
             if (triangle.inside(x, y))
             {
                 auto [w0, w1, w2] = triangle.computeBarycentric2D(x, y);
@@ -262,10 +263,13 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
                 }
 
                 //深度测试
-                int index = x + y * width;
-                if (p.windowPos.z() > zBuffer[index])
+                if (p.windowPos.z() > 1 || p.windowPos.z() < -1)
                 {
-                    zBuffer[index] = p.windowPos.z();
+                    continue;
+                }
+                if (p.windowPos.z() > getDepth(x, y))
+                {
+                    setDepth(x, y, p.windowPos.z());
                     auto color = fragmentShader->shade(p);
                     setPixel(x, y, color);
                 }
@@ -277,4 +281,24 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
 void Rasterizer::setRenderMode(RenderMode mode)
 {
     renderMode = mode;
+}
+
+float Rasterizer::getDepth(const int &x, const int &y)
+{
+    if (x < 0 || x >= width || y < 0 || y >= height)
+    {
+        return 1.0;
+    }
+    int index = x + y * width;
+    return zBuffer[index];
+}
+
+void Rasterizer::setDepth(const int &x, const int &y, const float &depth)
+{
+    if (x < 0 || x >= width || y < 0 || y >= height)
+    {
+        return;
+    }
+    int index = x + y * width;
+    zBuffer[index] = depth;
 }

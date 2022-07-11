@@ -22,7 +22,6 @@ void NaiveVertexShader::setProjectMatrix(const Eigen::Matrix4f &project)
 
 Vertex NaiveVertexShader::shade(const Vertex &vertex)
 {
-    Eigen::Vector4f NDC_pos = projectMatrix * viewMatrix * modelMatrix * vertex.position;
-    NDC_pos = NDC_pos / NDC_pos.w();
-    return Vertex(NDC_pos, vertex.color, vertex.normal);
+    Eigen::Vector4f pos = projectMatrix * viewMatrix * modelMatrix * vertex.position;
+    return Vertex(pos, vertex.color, vertex.normal);
 }
