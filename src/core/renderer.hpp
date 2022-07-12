@@ -27,11 +27,15 @@ class Rasterizer : Renderer {
 private:
     void renderVertex(std::vector<Payload> &payloads);
 
+    void renderVertex(std::vector<Payload> &payloads, const std::vector<int> &indices);
+
     void renderEdge(std::vector<Payload> &payloads);
+
+    void renderEdge(std::vector<Payload> &payloads, const std::vector<int> &indices);
 
     void renderFace(std::vector<Payload> &payloads);
 
-    void renderFace(std::vector<Payload> &payloads, const std::vector<int>& indices);
+    void renderFace(std::vector<Payload> &payloads, const std::vector<int> &indices);
 
     float getDepth(const int &x, const int &y);
 

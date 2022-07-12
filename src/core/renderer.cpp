@@ -71,9 +71,9 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
     }
 
     if (renderMode == RenderMode::VERTEX) {
-        renderVertex(payloads);
+        renderVertex(payloads, model.indices);
     } else if (renderMode == RenderMode::EDGE) {
-        renderEdge(payloads);
+        renderEdge(payloads, model.indices);
     } else if (renderMode == RenderMode::FACE) {
         renderFace(payloads, model.indices);
     }
@@ -90,6 +90,14 @@ void Rasterizer::renderVertex(std::vector<Payload> &payloads) {
     }
 }
 
+void Rasterizer::renderVertex(std::vector<Payload> &payloads, const std::vector<int> &indices) {
+    for (auto &p: payloads) {
+        if (p.windowPos.x() >= 0 && p.windowPos.x() < width && p.windowPos.y() >= 0 && p.windowPos.y() < height) {
+            setPixel(p.windowPos.x(), p.windowPos.y(), p.color);
+        }
+    }
+}
+
 void Rasterizer::renderEdge(std::vector<Payload> &payloads) {
     for (int i = 0; i < payloads.size(); i += 3) {
         for (int j = 0; j < 3; j++) {
@@ -99,6 +107,17 @@ void Rasterizer::renderEdge(std::vector<Payload> &payloads) {
         }
     }
 }
+
+void Rasterizer::renderEdge(std::vector<Payload> &payloads, const std::vector<int> &indices) {
+    for (int i = 0; i < indices.size(); i += 3) {
+        for (int j = 0; j < 3; j++) {
+            Eigen::Vector4f v0_pos = payloads[indices[i + j]].windowPos;
+            Eigen::Vector4f v1_pos = payloads[indices[i + (j + 1) % 3]].windowPos;
+            drawLine(v0_pos.x(), v0_pos.y(), v1_pos.x(), v1_pos.y(), payloads[indices[i + j]].color);
+        }
+    }
+}
+
 
 void Rasterizer::renderFace(std::vector<Payload> &payloads) {
     for (int i = 0; i < payloads.size(); i += 3) {
