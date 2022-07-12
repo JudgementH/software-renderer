@@ -26,15 +26,14 @@ int main()
     float fov = 60.0f;
     Camera camera(&window, pos, lookat, up, fov);
 
-//    std::string obj_file_path = "models/spot/spot_triangulated_good.obj";
-     std::string obj_file_path = "models/spot/spot_control_mesh.obj";
+    std::string obj_file_path = "models/spot/spot_triangulated_good.obj";
+//     std::string obj_file_path = "models/spot/spot_control_mesh.obj";
 //     std::string obj_file_path = "models/rock/rock.obj";
 
     Model model(obj_file_path);
-    auto allTri = model.allVertices;
 
     Rasterizer rasterizer(width, height);
-    rasterizer.setRenderMode(RenderMode::EDGE);
+    rasterizer.setRenderMode(RenderMode::FACE);
 
     std::unique_ptr<VertexShader> vs = std::make_unique<NaiveVertexShader>();
     rasterizer.setVertexShader(vs);
@@ -44,7 +43,7 @@ int main()
 
     while (!window.is_close)
     {
-        camera.update();
+//        camera.update();
         window.clear();
         rasterizer.clearDepthBuffer();
         rasterizer.clearFrameBuffer();
@@ -55,7 +54,7 @@ int main()
         auto project = camera.getPerspectiveMatrix();
         rasterizer.setProjectMatrix(project);
 
-        auto buffer = rasterizer.render(allTri);
+        auto buffer = rasterizer.render(model);
 
         window.setFramebuffer(buffer);
         window.draw();

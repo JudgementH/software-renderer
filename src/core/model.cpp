@@ -1,48 +1,42 @@
 #include "model.hpp"
 #include "../loader/obj_loader.hpp"
 
-Model::Model(const std::string filename)
-{
+Model::Model(const std::string &filename) {
     std::string postfix = filename.substr(filename.find_last_of('.') + 1);
-    if (postfix == "obj")
-    {
+    if (postfix == "obj") {
         loader::OBJLoader loader(filename);
         shape_num = loader.shapes.size();
-        for (auto &shape : loader.shapes)
-        {
-            for (int i = 0; i < shape.vertices.size(); i = i + 3)
-            {
-                Vertex v[3];
-                for (int j = 0; j < 3; j++)
-                {
-                    v[j].position = Eigen::Vector4f(shape.vertices[i + j].position.x,
-                                                    shape.vertices[i + j].position.y,
-                                                    shape.vertices[i + j].position.z,
-                                                    1.0f);
+        if (shape_num > 1) {
+            std::cout << "目前只能处理一个shape的模型\n";
+            throw std::exception();
+        }
+
+        for (auto &shape: loader.shapes) {
+            vertices.resize(shape.vertices.size());
+            for (int i = 0; i < shape.indices.size(); i++) {
+
+                int idx = shape.indices[i];
+                indices.emplace_back(idx);
+
+
+                Eigen::Vector4f position = Eigen::Vector4f(shape.vertices[idx].position.x,
+                                                           shape.vertices[idx].position.y,
+                                                           shape.vertices[idx].position.z,
+                                                           1.0f);
+                Eigen::Vector4f color = Eigen::Vector4f::Ones();
+                Eigen::Vector3f normal = Eigen::Vector3f::Zero();
+                if (shape.has_normal) {
+                    normal = Eigen::Vector3f(shape.vertices[idx].normal.x,
+                                             shape.vertices[idx].normal.y,
+                                             shape.vertices[idx].normal.z);
                 }
 
-                if (shape.has_normal)
-                    for (int j = 0; j < 3; j++)
-                    {
-                        v[j].normal = Eigen::Vector3f(shape.vertices[i + j].normal.x,
-                                                      shape.vertices[i + j].normal.y,
-                                                      shape.vertices[i + j].normal.z);
-                    }
+                Vertex v(position, color, normal);
 
-                faces.emplace_back(v[0], v[1], v[2]);
+                vertices[idx] = v;
             }
         }
-    }
-    else
-    {
+    } else {
         throw "不支持的文件格式";
-    }
-
-    for (auto &face : faces)
-    {
-        for (auto &v : face.vertices)
-        {
-            allVertices.emplace_back(v);
-        }
     }
 }

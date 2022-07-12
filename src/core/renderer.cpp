@@ -50,6 +50,38 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(std::vector<Vertex> &vertices) 
     return framebuffer;
 }
 
+std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
+    if (vertexShader == nullptr) {
+        std::cout << "没有vertexShader" << std::endl;
+        throw std::exception();
+    }
+
+    // 1. turn vertices from model space to NDC space
+    std::vector<Payload> payloads;
+
+    //TODO:可多线程
+    for (int i = 0; i < model.vertices.size(); i++) {
+        Vertex temp_v = vertexShader->shade(model.vertices[i]);
+        temp_v.position /= temp_v.position.w();
+        Eigen::Vector4f worldPos = vertexShader->modelMatrix * model.vertices[i].position;
+        Eigen::Vector4f windowPos = viewPortMatrix * temp_v.position;
+        Eigen::Vector3f normal = temp_v.normal;
+        Eigen::Vector4f color = temp_v.color;
+        payloads.emplace_back(worldPos, windowPos, color, normal);
+    }
+
+    if (renderMode == RenderMode::VERTEX) {
+        renderVertex(payloads);
+    } else if (renderMode == RenderMode::EDGE) {
+        renderEdge(payloads);
+    } else if (renderMode == RenderMode::FACE) {
+        renderFace(payloads, model.indices);
+    }
+
+
+    return framebuffer;
+}
+
 void Rasterizer::renderVertex(std::vector<Payload> &payloads) {
     for (auto &p: payloads) {
         if (p.windowPos.x() >= 0 && p.windowPos.x() < width && p.windowPos.y() >= 0 && p.windowPos.y() < height) {
@@ -71,6 +103,12 @@ void Rasterizer::renderEdge(std::vector<Payload> &payloads) {
 void Rasterizer::renderFace(std::vector<Payload> &payloads) {
     for (int i = 0; i < payloads.size(); i += 3) {
         drawTriangle(payloads[i], payloads[i + 1], payloads[i + 2]);
+    }
+}
+
+void Rasterizer::renderFace(std::vector<Payload> &payloads, const std::vector<int> &indices) {
+    for (int i = 0; i < indices.size(); i += 3) {
+        drawTriangle(payloads[indices[i]], payloads[indices[i + 1]], payloads[indices[i + 2]]);
     }
 }
 

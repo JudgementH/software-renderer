@@ -9,8 +9,8 @@ class Model
 {
 public:
     int shape_num;
-    std::vector<Triangle> faces;
-    std::vector<Vertex> allVertices;
+    std::vector<Vertex> vertices;
+    std::vector<int> indices;
 
-    Model(const std::string filename);
+    Model(const std::string& filename);
 };

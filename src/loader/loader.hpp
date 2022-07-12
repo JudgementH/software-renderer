@@ -33,6 +33,7 @@ namespace loader
     struct Shape
     {
         std::vector<Vertex> vertices;
+        std::vector<int> indices;
         bool has_normal = false;
         bool has_texcoord = false;
     };
