@@ -9,6 +9,7 @@
 #include "utils.hpp"
 #include "payload.hpp"
 #include "model.hpp"
+#include "camera.hpp"
 
 class Renderer {
 public:
@@ -49,12 +50,15 @@ public:
     std::vector<Eigen::Vector4f> framebuffer;
     std::vector<float> zBuffer;
 
+    Camera *camera;
     std::unique_ptr<VertexShader> vertexShader;
     std::unique_ptr<FragmentShader> fragmentShader;
 
     Eigen::Matrix4f viewPortMatrix; // NDC to screen space
 
     Rasterizer(int width, int height);
+
+    Rasterizer(int width, int height, Camera *camera);
 
     ~Rasterizer();
 

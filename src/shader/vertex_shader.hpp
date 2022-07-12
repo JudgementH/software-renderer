@@ -6,10 +6,6 @@
 class NaiveVertexShader : public VertexShader
 {
 public:
-    Eigen::Matrix4f modelMatrix = Eigen::Matrix4f::Identity();
-    Eigen::Matrix4f viewMatrix = Eigen::Matrix4f::Identity();
-    Eigen::Matrix4f projectMatrix = Eigen::Matrix4f::Identity();
-
     NaiveVertexShader(Eigen::Matrix4f model = Eigen::Matrix4f::Identity(),
                       Eigen::Matrix4f view = Eigen::Matrix4f::Identity(),
                       Eigen::Matrix4f project = Eigen::Matrix4f::Identity());

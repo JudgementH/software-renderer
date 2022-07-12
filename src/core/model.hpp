@@ -4,7 +4,6 @@
 #include <string>
 #include "triangle.hpp"
 
-//TODO: 改为vertex和index类型
 class Model
 {
 public:

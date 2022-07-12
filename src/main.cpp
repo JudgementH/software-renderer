@@ -1,19 +1,23 @@
 #include <iostream>
 #include <eigen3/Eigen/Eigen>
 #include <memory>
-#include <thread>
 
-#include "core/utils.hpp"
 #include "core/model.hpp"
 #include "core/renderer.hpp"
 #include "core/camera.hpp"
 #include "gui/window.hpp"
 #include "shader/vertex_shader.hpp"
 #include "shader/normal_fragment_shader.hpp"
-#include "loader/obj_loader.hpp"
 
-int main()
-{
+int main() {
+
+//    Eigen::Matrix4f m = Eigen::Matrix4f::Random();
+//    std::cout << m << std::endl;
+//
+//    Eigen::Vector4f a = m.row(0);
+//    Eigen::Vector4f b(0, 0, 3, 0);
+//    std::cout << a.dot(b) << std::endl;
+
     int width = 1280;
     int height = 720;
     std::string title = "Software-renderer";
@@ -32,17 +36,17 @@ int main()
 
     Model model(obj_file_path);
 
-    Rasterizer rasterizer(width, height);
-    rasterizer.setRenderMode(RenderMode::FACE);
+    Rasterizer rasterizer(width, height, &camera);
+    rasterizer.setRenderMode(RenderMode::EDGE);
 
     std::unique_ptr<VertexShader> vs = std::make_unique<NaiveVertexShader>();
     rasterizer.setVertexShader(vs);
 
+
     std::unique_ptr<FragmentShader> fs = std::make_unique<NormalFragmentShader>();
     rasterizer.setFragmentShader(fs);
 
-    while (!window.is_close)
-    {
+    while (!window.is_close) {
 //        camera.update();
         window.clear();
         rasterizer.clearDepthBuffer();

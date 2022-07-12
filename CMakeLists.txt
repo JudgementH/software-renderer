@@ -19,10 +19,12 @@ file(GLOB_RECURSE SRC_FILES
     "${PROJECT_SOURCE_DIR}/src/*.c" ,
     "${PROJECT_SOURCE_DIR}/src/*.cpp")
 
-# add_executable(${PROJECT_NAME}
+ add_executable(${PROJECT_NAME} ${SRC_FILES})
+
+#add_executable(${PROJECT_NAME}
 # src/main.cpp)
 
-add_executable(${PROJECT_NAME} ${SRC_FILES})
+
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Eigen3::Eigen)
 target_link_libraries(${PROJECT_NAME} PRIVATE tinyobjloader::tinyobjloader)

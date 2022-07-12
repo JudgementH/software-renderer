@@ -16,11 +16,14 @@ Rasterizer::Rasterizer(int width, int height) : width(width), height(height) {
     // TODO: defalut fragment shader
 }
 
+Rasterizer::Rasterizer(int width, int height, Camera *camera) : Rasterizer(width, height) {
+    this->camera = camera;
+}
+
 Rasterizer::~Rasterizer() {
 }
 
 std::vector<Eigen::Vector4f> &Rasterizer::render(std::vector<Vertex> &vertices) {
-    // TODO: 有待添加重载方法 model
     if (vertices.size() % 3 != 0) {
         throw "目前只支持绘制三角形";
     }
@@ -127,7 +130,13 @@ void Rasterizer::renderFace(std::vector<Payload> &payloads) {
 
 void Rasterizer::renderFace(std::vector<Payload> &payloads, const std::vector<int> &indices) {
     for (int i = 0; i < indices.size(); i += 3) {
-        drawTriangle(payloads[indices[i]], payloads[indices[i + 1]], payloads[indices[i + 2]]);
+        Payload p0 = payloads[indices[i]];
+        Payload p1 = payloads[indices[i + 1]];
+        Payload p2 = payloads[indices[i + 2]];
+        if (camera->inFrustum(p0.worldPos.head<3>(), p1.worldPos.head<3>(), p2.worldPos.head<3>())) {
+            drawTriangle(p0, p1, p2);
+        }
+        drawTriangle(p0, p1, p2);
     }
 }
 

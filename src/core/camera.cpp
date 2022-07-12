@@ -68,7 +68,7 @@ Eigen::Matrix4f Camera::getViewMatrix() {
 
 Eigen::Matrix4f Camera::getPerspectiveMatrix() const {
     /**
-     * @brief map from [n,f] to [1, -1] NDC; n and f are negative
+     * @brief map from [n,f] to [-w, w] space; n and f are negative
      *  camera cone is symmetric , so thera is no translation
      *
      */
@@ -151,6 +151,9 @@ void Camera::mouseHandle(int param, int x, int y) {
 }
 
 bool Camera::inFrustum(const Eigen::Vector3f &v0, const Eigen::Vector3f &v1, const Eigen::Vector3f &v2) {
+    /**
+     * v0,v1,v2 are the points in world space;
+     */
     //TODO: 测试视锥裁剪
     Eigen::AlignedBox3f box;
     box.extend(v0).extend(v1).extend(v2);
@@ -160,14 +163,14 @@ bool Camera::inFrustum(const Eigen::Vector3f &v0, const Eigen::Vector3f &v1, con
     Eigen::Matrix4f vp = getPerspectiveMatrix() * getViewMatrix();
 
 
-    Eigen::Vector4f left = vp.row(0) + vp.row(3);
+    Eigen::Vector4f left = vp.row(3) + vp.row(0);
     Eigen::Vector4f right = vp.row(3) - vp.row(0);
 
     Eigen::Vector4f top = vp.row(3) - vp.row(1);
-    Eigen::Vector4f bottom = vp.row(1) + vp.row(3);
+    Eigen::Vector4f bottom = vp.row(3) + vp.row(1);
 
     Eigen::Vector4f front = vp.row(3) - vp.row(2);
-    Eigen::Vector4f back = vp.row(2) + vp.row(3);
+    Eigen::Vector4f back = vp.row(3) + vp.row(2);
 
     // 左面判断
     if (left.dot(minPoint) < 0 && right.dot(maxPoint) < 0) {
