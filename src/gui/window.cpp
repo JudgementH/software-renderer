@@ -99,7 +99,7 @@ Window::Window(int width, int height, std::string title) : width(width), height(
             .detach();
     }
     // hide the cursor
-    // ShowCursor(false);
+     ShowCursor(false);
 }
 
 Window::~Window()

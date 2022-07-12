@@ -1,17 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
-set(CMAKE_TOOLCHAIN_FILE "E:/Program Files/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 if(DEFINED ENV{VCPKG_DEFAULT_TRIPLET} AND NOT DEFINED VCPKG_TARGET_TRIPLET)
     set(VCPKG_TARGET_TRIPLET "$ENV{VCPKG_DEFAULT_TRIPLET}" CACHE STRING "")
 endif()
 
-# include_directories("E:/Program Files/vcpkg/installed/x64-windows/include")
-set(tinyobjloader_DIR "E:/Program Files/vcpkg/installed/x64-windows/share/tinyobjloader")
-
 project(software_renderer)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CAMKE_CXX_FLAGS} -O3 -fopenmp")
+set(CMAKE_CXX_FLAGS "${CAMKE_CXX_FLAGS} -fopenmp")
 
 
 find_package(Eigen3 CONFIG REQUIRED)
