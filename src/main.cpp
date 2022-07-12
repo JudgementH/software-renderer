@@ -11,12 +11,6 @@
 
 int main() {
 
-//    Eigen::Matrix4f m = Eigen::Matrix4f::Random();
-//    std::cout << m << std::endl;
-//
-//    Eigen::Vector4f a = m.row(0);
-//    Eigen::Vector4f b(0, 0, 3, 0);
-//    std::cout << a.dot(b) << std::endl;
 
     int width = 1280;
     int height = 720;
@@ -32,12 +26,12 @@ int main() {
 
     std::string obj_file_path = "models/spot/spot_triangulated_good.obj";
 //     std::string obj_file_path = "models/spot/spot_control_mesh.obj";
-//     std::string obj_file_path = "models/rock/rock.obj";
+//    std::string obj_file_path = "models/bunny/bunny.obj";
 
     Model model(obj_file_path);
 
     Rasterizer rasterizer(width, height, &camera);
-    rasterizer.setRenderMode(RenderMode::EDGE);
+    rasterizer.setRenderMode(RenderMode::FACE);
 
     std::unique_ptr<VertexShader> vs = std::make_unique<NaiveVertexShader>();
     rasterizer.setVertexShader(vs);
@@ -47,6 +41,7 @@ int main() {
     rasterizer.setFragmentShader(fs);
 
     while (!window.is_close) {
+
 //        camera.update();
         window.clear();
         rasterizer.clearDepthBuffer();

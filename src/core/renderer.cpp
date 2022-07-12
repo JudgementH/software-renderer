@@ -113,11 +113,17 @@ void Rasterizer::renderEdge(std::vector<Payload> &payloads) {
 
 void Rasterizer::renderEdge(std::vector<Payload> &payloads, const std::vector<int> &indices) {
     for (int i = 0; i < indices.size(); i += 3) {
-        for (int j = 0; j < 3; j++) {
-            Eigen::Vector4f v0_pos = payloads[indices[i + j]].windowPos;
-            Eigen::Vector4f v1_pos = payloads[indices[i + (j + 1) % 3]].windowPos;
-            drawLine(v0_pos.x(), v0_pos.y(), v1_pos.x(), v1_pos.y(), payloads[indices[i + j]].color);
+        Payload p0 = payloads[indices[i]];
+        Payload p1 = payloads[indices[i + 1]];
+        Payload p2 = payloads[indices[i + 2]];
+        if (camera->inFrustum(p0.worldPos.head<3>(), p1.worldPos.head<3>(), p2.worldPos.head<3>())) {
+            for (int j = 0; j < 3; j++) {
+                Eigen::Vector4f v0_pos = payloads[indices[i + j]].windowPos;
+                Eigen::Vector4f v1_pos = payloads[indices[i + (j + 1) % 3]].windowPos;
+                drawLine(v0_pos.x(), v0_pos.y(), v1_pos.x(), v1_pos.y(), payloads[indices[i + j]].color);
+            }
         }
+
     }
 }
 
@@ -133,10 +139,10 @@ void Rasterizer::renderFace(std::vector<Payload> &payloads, const std::vector<in
         Payload p0 = payloads[indices[i]];
         Payload p1 = payloads[indices[i + 1]];
         Payload p2 = payloads[indices[i + 2]];
-        if (camera->inFrustum(p0.worldPos.head<3>(), p1.worldPos.head<3>(), p2.worldPos.head<3>())) {
+        if (p0.windowPos.z() < 1 && p0.windowPos.z() > -1) {
             drawTriangle(p0, p1, p2);
         }
-        drawTriangle(p0, p1, p2);
+
     }
 }
 

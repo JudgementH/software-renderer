@@ -154,7 +154,7 @@ bool Camera::inFrustum(const Eigen::Vector3f &v0, const Eigen::Vector3f &v1, con
     /**
      * v0,v1,v2 are the points in world space;
      */
-    //TODO: 测试视锥裁剪
+    //TODO: 测试视锥裁剪有问题
     Eigen::AlignedBox3f box;
     box.extend(v0).extend(v1).extend(v2);
     Eigen::Vector4f minPoint(box.min().x(), box.min().y(), box.min().z(), 1.0f);
@@ -171,6 +171,7 @@ bool Camera::inFrustum(const Eigen::Vector3f &v0, const Eigen::Vector3f &v1, con
 
     Eigen::Vector4f front = vp.row(3) - vp.row(2);
     Eigen::Vector4f back = vp.row(3) + vp.row(2);
+
 
     // 左面判断
     if (left.dot(minPoint) < 0 && right.dot(maxPoint) < 0) {
@@ -197,6 +198,7 @@ bool Camera::inFrustum(const Eigen::Vector3f &v0, const Eigen::Vector3f &v1, con
         return false;
     }
 
+    //后面判断
     if (back.dot(minPoint) < 0 || back.dot(maxPoint) < 0) {
         return false;
     }
