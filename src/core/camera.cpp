@@ -143,65 +143,44 @@ void Camera::mouseHandle(int param, int x, int y) {
     int centerY = window->height / 2.0f;
     int dx = x - centerX;
     int dy = centerY - y;
-    printf("dx=%d, dy=%d\n", dx, dy);
     rotatePitch(-dy * mouseSensitivity);
     rotateYaw(-dx * mouseSensitivity);
-    printf("pitch=%f, yaw=%f\n", pitch, yaw);
     window->setCursorPosition(centerX, centerY);
 }
 
-bool Camera::inFrustum(const Eigen::Vector3f &v0, const Eigen::Vector3f &v1, const Eigen::Vector3f &v2) {
+bool Camera::inFrustum(const Eigen::Vector4f &clipPos0, const Eigen::Vector4f &clipPos1,
+                       const Eigen::Vector4f &clipPos2) const {
     /**
-     * v0,v1,v2 are the points in world space;
+     * clipPos0,clipPos1,clipPos2 are the points in clip space;
      */
-    //TODO: 测试视锥裁剪有问题
-    Eigen::AlignedBox3f box;
-    box.extend(v0).extend(v1).extend(v2);
-    Eigen::Vector4f minPoint(box.min().x(), box.min().y(), box.min().z(), 1.0f);
-    Eigen::Vector4f maxPoint(box.max().x(), box.max().y(), box.max().z(), 1.0f);
-
-    Eigen::Matrix4f vp = getPerspectiveMatrix() * getViewMatrix();
-
-
-    Eigen::Vector4f left = vp.row(3) + vp.row(0);
-    Eigen::Vector4f right = vp.row(3) - vp.row(0);
-
-    Eigen::Vector4f top = vp.row(3) - vp.row(1);
-    Eigen::Vector4f bottom = vp.row(3) + vp.row(1);
-
-    Eigen::Vector4f front = vp.row(3) - vp.row(2);
-    Eigen::Vector4f back = vp.row(3) + vp.row(2);
-
-
-    // 左面判断
-    if (left.dot(minPoint) < 0 && right.dot(maxPoint) < 0) {
+    if (clipPos0.w() > n && clipPos1.w() > n && clipPos2.w() > n) {
+        return false;
+    }
+    if (clipPos0.w() < f && clipPos1.w() < f && clipPos2.w() < f) {
         return false;
     }
 
-    //右面判断
-    if (right.dot(minPoint) < 0 && right.dot(maxPoint) < 0) {
+    if (clipPos0.x() < clipPos0.w() && clipPos1.x() < clipPos1.w() && clipPos2.x() < clipPos2.w()) {
+        return false;
+    }
+    if (clipPos0.x() > -clipPos0.w() && clipPos1.x() > -clipPos1.w() && clipPos2.x() > -clipPos2.w()) {
         return false;
     }
 
-    //上面判断
-    if (top.dot(minPoint) < 0 && top.dot(maxPoint) < 0) {
+    if (clipPos0.y() < clipPos0.w() && clipPos1.y() < clipPos1.w() && clipPos2.y() < clipPos2.w()) {
+        return false;
+    }
+    if (clipPos0.y() > -clipPos0.w() && clipPos1.y() > -clipPos1.w() && clipPos2.y() > -clipPos2.w()) {
         return false;
     }
 
-    //下面判断
-    if (bottom.dot(minPoint) < 0 && bottom.dot(maxPoint) < 0) {
+    if (clipPos0.z() < clipPos0.w() && clipPos1.z() < clipPos1.w() && clipPos2.z() < clipPos2.w()) {
+        return false;
+    }
+    if (clipPos0.z() > -clipPos0.w() && clipPos1.z() > -clipPos1.w() && clipPos2.z() > -clipPos2.w()) {
         return false;
     }
 
-    //前面判断
-    if (front.dot(minPoint) < 0 || front.dot(maxPoint) < 0) {
-        return false;
-    }
-
-    //后面判断
-    if (back.dot(minPoint) < 0 || back.dot(maxPoint) < 0) {
-        return false;
-    }
     return true;
 
 

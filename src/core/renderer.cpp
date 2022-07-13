@@ -36,10 +36,18 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(std::vector<Vertex> &vertices) 
         Vertex temp_v = vertexShader->shade(v);
         temp_v.position /= temp_v.position.w();
         Eigen::Vector4f worldPos = vertexShader->modelMatrix * v.position;
+        Eigen::Vector4f viewPos = vertexShader->viewMatrix * worldPos;
+        Eigen::Vector4f clipPos = vertexShader->projectMatrix * viewPos;
         Eigen::Vector4f windowPos = viewPortMatrix * temp_v.position;
         Eigen::Vector3f normal = temp_v.normal;
         Eigen::Vector4f color = temp_v.color;
-        payloads.emplace_back(worldPos, windowPos, color, normal);
+        payloads.emplace_back(worldPos,
+                              viewPos,
+                              clipPos,
+                              temp_v.position,
+                              windowPos,
+                              color,
+                              normal);
     }
 
     if (renderMode == RenderMode::VERTEX) {
@@ -67,10 +75,20 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
         Vertex temp_v = vertexShader->shade(model.vertices[i]);
         temp_v.position /= temp_v.position.w();
         Eigen::Vector4f worldPos = vertexShader->modelMatrix * model.vertices[i].position;
+        Eigen::Vector4f viewPos = vertexShader->viewMatrix * worldPos;
+        Eigen::Vector4f clipPos = vertexShader->projectMatrix * viewPos;
+        Eigen::Vector4f NDCPos = temp_v.position;
         Eigen::Vector4f windowPos = viewPortMatrix * temp_v.position;
         Eigen::Vector3f normal = temp_v.normal;
         Eigen::Vector4f color = temp_v.color;
-        payloads.emplace_back(worldPos, windowPos, color, normal);
+
+        payloads.emplace_back(worldPos,
+                              viewPos,
+                              clipPos,
+                              NDCPos,
+                              windowPos,
+                              color,
+                              normal);
     }
 
     if (renderMode == RenderMode::VERTEX) {
@@ -116,11 +134,14 @@ void Rasterizer::renderEdge(std::vector<Payload> &payloads, const std::vector<in
         Payload p0 = payloads[indices[i]];
         Payload p1 = payloads[indices[i + 1]];
         Payload p2 = payloads[indices[i + 2]];
-        if (camera->inFrustum(p0.worldPos.head<3>(), p1.worldPos.head<3>(), p2.worldPos.head<3>())) {
+        if (camera->inFrustum(p0.clipPos, p1.clipPos, p2.clipPos)) {
             for (int j = 0; j < 3; j++) {
-                Eigen::Vector4f v0_pos = payloads[indices[i + j]].windowPos;
-                Eigen::Vector4f v1_pos = payloads[indices[i + (j + 1) % 3]].windowPos;
-                drawLine(v0_pos.x(), v0_pos.y(), v1_pos.x(), v1_pos.y(), payloads[indices[i + j]].color);
+                Payload v0_pos = payloads[indices[i + j]];
+                Payload v1_pos = payloads[indices[i + (j + 1) % 3]];
+                drawLine(v0_pos.windowPos.x(), v0_pos.windowPos.y(),
+                         v1_pos.windowPos.x(), v1_pos.windowPos.y(),
+                         payloads[indices[i + j]].color);
+
             }
         }
 
@@ -139,7 +160,7 @@ void Rasterizer::renderFace(std::vector<Payload> &payloads, const std::vector<in
         Payload p0 = payloads[indices[i]];
         Payload p1 = payloads[indices[i + 1]];
         Payload p2 = payloads[indices[i + 2]];
-        if (p0.windowPos.z() < 1 && p0.windowPos.z() > -1) {
+        if (camera->inFrustum(p0.clipPos,p1.clipPos,p2.clipPos)) {
             drawTriangle(p0, p1, p2);
         }
 

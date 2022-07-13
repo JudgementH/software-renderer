@@ -56,5 +56,5 @@ public:
 
     void update();
 
-    bool inFrustum(const Eigen::Vector3f &v0, const Eigen::Vector3f &v1, const Eigen::Vector3f &v2);
+    bool inFrustum(const Eigen::Vector4f &clipPos0, const Eigen::Vector4f &clipPos1, const Eigen::Vector4f &clipPos2) const;
 };
