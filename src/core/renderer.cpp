@@ -23,6 +23,26 @@ Rasterizer::Rasterizer(int width, int height, Camera *camera) : Rasterizer(width
 Rasterizer::~Rasterizer() {
 }
 
+Payload Rasterizer::shadeVertex(const Vertex &vertex) {
+    Vertex temp_v = vertexShader->shade(vertex);
+    temp_v.position /= temp_v.position.w();
+    Eigen::Vector4f worldPos = vertexShader->modelMatrix * vertex.position;
+    Eigen::Vector4f viewPos = vertexShader->viewMatrix * worldPos;
+    Eigen::Vector4f clipPos = vertexShader->projectMatrix * viewPos;
+    Eigen::Vector4f NDCPos = temp_v.position;
+    Eigen::Vector4f windowPos = viewPortMatrix * temp_v.position;
+    Eigen::Vector3f normal = temp_v.normal;
+    Eigen::Vector4f color = temp_v.color;
+    Payload payload(worldPos,
+                    viewPos,
+                    clipPos,
+                    NDCPos,
+                    windowPos,
+                    color,
+                    normal);
+    return payload;
+}
+
 std::vector<Eigen::Vector4f> &Rasterizer::render(std::vector<Vertex> &vertices) {
     if (vertices.size() % 3 != 0) {
         throw "目前只支持绘制三角形";
@@ -31,23 +51,11 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(std::vector<Vertex> &vertices) 
         throw "没有VertexShader";
     }
 
+    //vertex shader
     std::vector<Payload> payloads;
     for (auto &v: vertices) {
-        Vertex temp_v = vertexShader->shade(v);
-        temp_v.position /= temp_v.position.w();
-        Eigen::Vector4f worldPos = vertexShader->modelMatrix * v.position;
-        Eigen::Vector4f viewPos = vertexShader->viewMatrix * worldPos;
-        Eigen::Vector4f clipPos = vertexShader->projectMatrix * viewPos;
-        Eigen::Vector4f windowPos = viewPortMatrix * temp_v.position;
-        Eigen::Vector3f normal = temp_v.normal;
-        Eigen::Vector4f color = temp_v.color;
-        payloads.emplace_back(worldPos,
-                              viewPos,
-                              clipPos,
-                              temp_v.position,
-                              windowPos,
-                              color,
-                              normal);
+        Payload p = shadeVertex(v);
+        payloads.emplace_back(p);
     }
 
     if (renderMode == RenderMode::VERTEX) {
@@ -72,25 +80,11 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
 
     //TODO:可多线程
     for (int i = 0; i < model.vertices.size(); i++) {
-        Vertex temp_v = vertexShader->shade(model.vertices[i]);
-        temp_v.position /= temp_v.position.w();
-        Eigen::Vector4f worldPos = vertexShader->modelMatrix * model.vertices[i].position;
-        Eigen::Vector4f viewPos = vertexShader->viewMatrix * worldPos;
-        Eigen::Vector4f clipPos = vertexShader->projectMatrix * viewPos;
-        Eigen::Vector4f NDCPos = temp_v.position;
-        Eigen::Vector4f windowPos = viewPortMatrix * temp_v.position;
-        Eigen::Vector3f normal = temp_v.normal;
-        Eigen::Vector4f color = temp_v.color;
-
-        payloads.emplace_back(worldPos,
-                              viewPos,
-                              clipPos,
-                              NDCPos,
-                              windowPos,
-                              color,
-                              normal);
+        Payload p = shadeVertex(model.vertices[i]);
+        payloads.emplace_back(p);
     }
 
+    // 2. fragement shader
     if (renderMode == RenderMode::VERTEX) {
         renderVertex(payloads, model.indices);
     } else if (renderMode == RenderMode::EDGE) {
@@ -98,7 +92,6 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
     } else if (renderMode == RenderMode::FACE) {
         renderFace(payloads, model.indices);
     }
-
 
     return framebuffer;
 }
@@ -160,10 +153,9 @@ void Rasterizer::renderFace(std::vector<Payload> &payloads, const std::vector<in
         Payload p0 = payloads[indices[i]];
         Payload p1 = payloads[indices[i + 1]];
         Payload p2 = payloads[indices[i + 2]];
-        if (camera->inFrustum(p0.clipPos,p1.clipPos,p2.clipPos)) {
+        if (camera->inFrustum(p0.clipPos, p1.clipPos, p2.clipPos)) {
             drawTriangle(p0, p1, p2);
         }
-
     }
 }
 

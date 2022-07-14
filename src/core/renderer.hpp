@@ -26,6 +26,8 @@ enum class RenderMode {
 
 class Rasterizer : Renderer {
 private:
+    Payload shadeVertex(const Vertex &vertex);
+
     void renderVertex(std::vector<Payload> &payloads);
 
     void renderVertex(std::vector<Payload> &payloads, const std::vector<int> &indices);
