@@ -31,7 +31,7 @@ int main() {
     Model model(obj_file_path);
 
     Rasterizer rasterizer(width, height, &camera);
-    rasterizer.setRenderMode(RenderMode::FACE);
+    rasterizer.setRenderMode(RenderMode::EDGE);
 
     std::unique_ptr<VertexShader> vs = std::make_unique<NaiveVertexShader>();
     rasterizer.setVertexShader(vs);

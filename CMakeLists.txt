@@ -9,6 +9,7 @@ project(software_renderer)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CAMKE_CXX_FLAGS} -fopenmp")
 
+set(tinyobjloader_DIR "E:\\Program Files\\vcpkg\\installed\\x64-windows\\share\\tinyobjloader")
 
 find_package(Eigen3 CONFIG REQUIRED)
 find_package(tinyobjloader CONFIG REQUIRED)
