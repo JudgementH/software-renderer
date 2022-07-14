@@ -44,6 +44,8 @@ private:
 
     void setDepth(const int &x, const int &y, const float &depth);
 
+    static std::vector<Payload> clipHomogeneous(const Payload &p0, const Payload &p1, const Payload &p2);
+
 public:
     RenderMode renderMode = RenderMode::EDGE;
     int width;

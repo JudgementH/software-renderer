@@ -84,7 +84,7 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
         payloads.emplace_back(p);
     }
 
-    // 2. fragement shader
+    // 2. fragment shader
     if (renderMode == RenderMode::VERTEX) {
         renderVertex(payloads, model.indices);
     } else if (renderMode == RenderMode::EDGE) {
@@ -153,9 +153,23 @@ void Rasterizer::renderFace(std::vector<Payload> &payloads, const std::vector<in
         Payload p0 = payloads[indices[i]];
         Payload p1 = payloads[indices[i + 1]];
         Payload p2 = payloads[indices[i + 2]];
+
+        // Frustum Culling
         if (camera->inFrustum(p0.clipPos, p1.clipPos, p2.clipPos)) {
+
+            // Homogeneous Space Clipping
+//            std::vector<Payload> ps = clipHomogeneous(p0, p1, p2);
+//
+//            for (int j = 0; j < ps.size() - 2; j++) {
+//                Payload t0 = ps[0];
+//                Payload t1 = ps[j + 1];
+//                Payload t2 = ps[j + 2];
+//                drawTriangle(t0, t1, t2);
+//            }
+
             drawTriangle(p0, p1, p2);
         }
+
     }
 }
 
@@ -192,7 +206,7 @@ void Rasterizer::setPixel(int x, int y, Eigen::Vector4f color) {
     y = (y == height) ? y - 1 : y;
     if (x < 0 || x >= width || y < 0 || y >= height) {
 
-//        std::cout << "My Exception OutOfRange\n";
+        std::cout << "My Exception setPixel() OutOfRange\n";
         return;
     }
     int index = x + y * width;
@@ -290,7 +304,7 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
     boxMaxY = std::clamp(boxMaxY, 0, height - 1);
 
     // TODO: 并行化 最后深度测试
-    // TODO: 背面
+    // TODO: 背面剔除
     for (int y = boxMinY; y <= boxMaxY; y++) {
         for (int x = boxMinX; x <= boxMaxX; x++) {
 
@@ -335,3 +349,57 @@ void Rasterizer::setDepth(const int &x, const int &y, const float &depth) {
     int index = x + y * width;
     zBuffer[index] = depth;
 }
+
+std::vector<Payload> Rasterizer::clipHomogeneous(const Payload &p0, const Payload &p1, const Payload &p2) {
+    std::vector<Payload> output = {p0, p1, p2};
+
+    const std::vector<Eigen::Vector4f> planes = {
+            //Near
+            Eigen::Vector4f(0, 0, -1, -1),
+            //far
+            Eigen::Vector4f(0, 0, 1, -1),
+            //right
+            Eigen::Vector4f(-1, 0, 0, -1),
+            //left
+            Eigen::Vector4f(1, 0, 0, -1),
+            //top
+            Eigen::Vector4f(0, -1, 0, -1),
+            //bottom
+            Eigen::Vector4f(0, 1, 0, -1)
+    };
+
+    for (int i = 0; i < planes.size(); i++) {
+        std::vector<Payload> input(output);
+        output.clear();
+
+        for (int j = 0; j < input.size(); j++) {
+            int current_index = j;
+            int previous_index = (j + input.size() - 1) % input.size();
+
+            Payload P = input[previous_index];
+            Payload Q = input[current_index];
+
+            // from P to Q
+            float dis_P = math::ProjectDistance(planes[i], P.clipPos);
+            float dis_Q = math::ProjectDistance(planes[i], Q.clipPos);
+
+            if (dis_P * dis_Q < 0) {
+                // cross the plane
+                Payload intersect = Payload::Lerp(P, Q, (dis_P / (dis_P - dis_Q)));
+                output.emplace_back(intersect);
+            }
+
+            if (dis_Q >= 0) {
+                // Q in plane
+                output.emplace_back(Q);
+            }
+
+        }
+    }
+
+    return output;
+}
+
+
+
+

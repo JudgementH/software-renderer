@@ -148,6 +148,8 @@ void Camera::mouseHandle(int param, int x, int y) {
     window->setCursorPosition(centerX, centerY);
 }
 
+
+
 bool Camera::inFrustum(const Eigen::Vector4f &clipPos0, const Eigen::Vector4f &clipPos1,
                        const Eigen::Vector4f &clipPos2) const {
     /**
