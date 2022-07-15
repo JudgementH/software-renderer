@@ -47,11 +47,11 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
 
     // turn vertices from model space to NDC space
     std::vector<Payload> payloads;
+    payloads.resize(model.vertices.size());
 
-    // TODO:可多线程
+#pragma omp parallel for
     for (int i = 0; i < model.vertices.size(); i++) {
-        Payload p = vertexShader->shade(model.vertices[i]);
-        payloads.emplace_back(p);
+        payloads[i] = vertexShader->shade(model.vertices[i]);
     }
 
     for (int i = 0; i < model.indices.size(); i += 3) {
@@ -74,6 +74,11 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
         for (int j = 0; j < ps.size(); j++) {
             ps[j].NDCPos = ps[j].clipPos / ps[j].clipPos.w();
             ps[j].windowPos = viewPortMatrix * ps[j].NDCPos;
+
+            // Texture
+            if (model.texture) {
+                ps[j].texture = &*model.texture;
+            }
         }
 
         // rasterization

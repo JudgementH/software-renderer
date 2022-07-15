@@ -29,5 +29,6 @@ Payload NaiveVertexShader::shade(const Vertex &vertex) {
     p.clipPos = projectMatrix * p.viewPos;
     p.normal = vertex.normal;
     p.color = vertex.color;
+    p.texcood = vertex.texcoord;
     return p;
 }

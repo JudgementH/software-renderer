@@ -1,5 +1,6 @@
 #include "model.hpp"
 
+#include <omp.h>
 #include <utility>
 #include "../loader/obj_loader.hpp"
 
@@ -15,27 +16,30 @@ Model::Model(const std::string &filename) {
 
         for (auto &shape: loader.shapes) {
             vertices.resize(shape.vertices.size());
-            for (int i = 0; i < shape.indices.size(); i++) {
+            indices = shape.indices;
+#pragma omp parallel for
+            for (int i = 0; i < shape.vertices.size(); i++) {
+                vertices[i].position = Eigen::Vector4f(shape.vertices[i].position.x,
+                                                       shape.vertices[i].position.y,
+                                                       shape.vertices[i].position.z,
+                                                       1.0f);
 
-                int idx = shape.indices[i];
-                indices.emplace_back(idx);
+                vertices[i].color = Eigen::Vector4f::Ones();
 
+                vertices[i].normal = Eigen::Vector3f::Zero();
 
-                Eigen::Vector4f position = Eigen::Vector4f(shape.vertices[idx].position.x,
-                                                           shape.vertices[idx].position.y,
-                                                           shape.vertices[idx].position.z,
-                                                           1.0f);
-                Eigen::Vector4f color = Eigen::Vector4f::Ones();
-                Eigen::Vector3f normal = Eigen::Vector3f::Zero();
                 if (shape.has_normal) {
-                    normal = Eigen::Vector3f(shape.vertices[idx].normal.x,
-                                             shape.vertices[idx].normal.y,
-                                             shape.vertices[idx].normal.z);
+                    vertices[i].normal = Eigen::Vector3f(shape.vertices[i].normal.x,
+                                                         shape.vertices[i].normal.y,
+                                                         shape.vertices[i].normal.z);
                 }
 
-                Vertex v(position, color, normal);
+                vertices[i].texcoord = Eigen::Vector2f::Zero();
+                if (shape.has_texcoord) {
+                    vertices[i].texcoord = Eigen::Vector2f(shape.vertices[i].texcoord.x,
+                                                           shape.vertices[i].texcoord.y);
+                }
 
-                vertices[idx] = v;
             }
         }
     } else {
@@ -46,4 +50,8 @@ Model::Model(const std::string &filename) {
 Model::Model(std::vector<Vertex> vertices, std::vector<int> indices)
         : vertices(std::move(vertices)), indices(std::move(indices)) {
 
+}
+
+void Model::setTexture(Texture tex) {
+    texture = tex;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Eigen/Eigen>
+#include "texture.hpp"
 
 class Payload {
 public:
@@ -12,6 +13,7 @@ public:
     Eigen::Vector4f color = Eigen::Vector4f::Ones();
     Eigen::Vector3f normal = Eigen::Vector3f::Zero();
     Eigen::Vector2f texcood = Eigen::Vector2f::Zero();
+    Texture* texture = nullptr;
 
     Payload() = default;
 

@@ -8,6 +8,7 @@
 #include "gui/window.hpp"
 #include "shader/vertex_shader.hpp"
 #include "shader/normal_fragment_shader.hpp"
+#include "shader/blinn_phong_fragment_shader.hpp"
 
 int main() {
 
@@ -17,7 +18,7 @@ int main() {
     std::string title = "Software-renderer";
     Window window(width, height, title);
 
-    Eigen::Vector3f pos(0.4f, 0.5f, 2.0f);
+    Eigen::Vector3f pos(-1.0f, 0.5f, -2.0f);
 //    Eigen::Vector3f pos(0.0f, 0.0f, 0.4f);
     Eigen::Vector3f lookat(0.0f, 0.0f, 0.0f);
     Eigen::Vector3f up(0.0f, 1.0f, 0.0f);
@@ -29,6 +30,8 @@ int main() {
 //    std::string obj_file_path = "models/bunny/bunny.obj";
 
     Model model(obj_file_path);
+    Texture texture("models/spot/spot_texture.png");
+    model.setTexture(texture);
 
     std::vector<Vertex> vertices = {Vertex(Eigen::Vector4f(0, 1, 0, 1)),
                                     Vertex(Eigen::Vector4f(-1, -2, 0, 1)),
@@ -42,8 +45,9 @@ int main() {
     rasterizer.setVertexShader(vs);
 
 
-    std::unique_ptr<FragmentShader> fs = std::make_unique<NormalFragmentShader>();
-    rasterizer.setFragmentShader(fs);
+//    std::unique_ptr<FragmentShader> fs = std::make_unique<NormalFragmentShader>();
+    std::unique_ptr<FragmentShader> bpfs = std::make_unique<BlinnPhongFragmentShader>();
+    rasterizer.setFragmentShader(bpfs);
 
     while (!window.is_close) {
 
