@@ -39,16 +39,6 @@ Rasterizer::Rasterizer(int width, int height, Camera *camera) : Rasterizer(width
 Rasterizer::~Rasterizer() {
 }
 
-Payload Rasterizer::shadeVertex(const Vertex &vertex) {
-    Payload p;
-    p.worldPos = vertexShader->modelMatrix * vertex.position;
-    p.viewPos = vertexShader->viewMatrix * p.worldPos;
-    p.clipPos = vertexShader->projectMatrix * p.viewPos;
-    p.normal = vertex.normal;
-    p.color = vertex.color;
-    return p;
-}
-
 std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
     if (vertexShader == nullptr) {
         std::cout << "没有vertexShader" << std::endl;
@@ -60,99 +50,76 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
 
     // TODO:可多线程
     for (int i = 0; i < model.vertices.size(); i++) {
-        Payload p = shadeVertex(model.vertices[i]);
+        Payload p = vertexShader->shade(model.vertices[i]);
         payloads.emplace_back(p);
     }
 
-    // 2. fragment shader
-    if (renderMode == RenderMode::VERTEX) {
-        renderVertex(payloads, model.indices);
-    } else if (renderMode == RenderMode::EDGE) {
-        renderEdge(payloads, model.indices);
-    } else if (renderMode == RenderMode::FACE) {
-        renderFace(payloads, model.indices);
+    for (int i = 0; i < model.indices.size(); i += 3) {
+        Payload p0 = payloads[model.indices[i]];
+        Payload p1 = payloads[model.indices[i + 1]];
+        Payload p2 = payloads[model.indices[i + 2]];
+
+        // Frustum Culling
+        if (!camera->inFrustum(p0.clipPos, p1.clipPos, p2.clipPos)) {
+            continue;
+        }
+
+        // Homogeneous Space Clipping
+        std::vector<Payload> ps = clipHomogeneous(p0, p1, p2);
+        if (ps.empty()) {
+            continue;
+        }
+
+        // Perspective Division and viewport transform
+        for (int j = 0; j < ps.size(); j++) {
+            ps[j].NDCPos = ps[j].clipPos / ps[j].clipPos.w();
+            ps[j].windowPos = viewPortMatrix * ps[j].NDCPos;
+        }
+
+        // rasterization
+        for (int j = 0; j < ps.size() - 2; j++) {
+            Payload t0 = ps[0];
+            Payload t1 = ps[j + 1];
+            Payload t2 = ps[j + 2];
+
+            if (renderMode == RenderMode::VERTEX) {
+                renderVertex(t0, t1, t2);
+            } else if (renderMode == RenderMode::EDGE) {
+                renderEdge(t0, t1, t2);
+            } else if (renderMode == RenderMode::FACE) {
+                renderFace(t0, t1, t2);
+            }
+
+        }
+
     }
+
 
     return framebuffer;
 }
 
-void Rasterizer::renderVertex(std::vector<Payload> &payloads, const std::vector<int> &indices) {
-    for (auto &p: payloads) {
-        if (p.windowPos.x() >= 0 && p.windowPos.x() < width && p.windowPos.y() >= 0 && p.windowPos.y() < height) {
-            setPixel(p.windowPos.x(), p.windowPos.y(), p.color);
-        }
-    }
+void Rasterizer::renderVertex(Payload &p0, Payload &p1, Payload &p2) {
+    setPixel(p0.windowPos.x(), p0.windowPos.y(), p0.color);
+    setPixel(p1.windowPos.x(), p1.windowPos.y(), p1.color);
+    setPixel(p2.windowPos.x(), p2.windowPos.y(), p2.color);
 }
 
+void Rasterizer::renderEdge(Payload &p0, Payload &p1, Payload &p2) {
 
-void Rasterizer::renderEdge(std::vector<Payload> &payloads, const std::vector<int> &indices) {
-    for (int i = 0; i < indices.size(); i += 3) {
-        Payload p0 = payloads[indices[i]];
-        Payload p1 = payloads[indices[i + 1]];
-        Payload p2 = payloads[indices[i + 2]];
-        if (camera->inFrustum(p0.clipPos, p1.clipPos, p2.clipPos)) {
+    drawLine(p0.windowPos.x(), p0.windowPos.y(),
+             p1.windowPos.x(), p1.windowPos.y(),
+             p0.color);
+    drawLine(p1.windowPos.x(), p1.windowPos.y(),
+             p2.windowPos.x(), p2.windowPos.y(),
+             p1.color);
+    drawLine(p2.windowPos.x(), p2.windowPos.y(),
+             p0.windowPos.x(), p0.windowPos.y(),
+             p2.color);
 
-            std::vector<Payload> ps = clipHomogeneous(p0, p1, p2);
-            if (ps.empty()) {
-                continue;
-            }
-
-            // 透视除法
-            for (int i = 0; i < ps.size(); i++) {
-                ps[i].NDCPos = ps[i].clipPos / ps[i].clipPos.w();
-                ps[i].windowPos = viewPortMatrix * ps[i].NDCPos;
-            }
-
-            for (int j = 0; j < ps.size() - 2; j++) {
-                Payload v0_pos = ps[0];
-                Payload v1_pos = ps[j + 1];
-                Payload v2_pos = ps[j + 2];
-                drawLine(v0_pos.windowPos.x(), v0_pos.windowPos.y(),
-                         v1_pos.windowPos.x(), v1_pos.windowPos.y(),
-                         v0_pos.color);
-                drawLine(v1_pos.windowPos.x(), v1_pos.windowPos.y(),
-                         v2_pos.windowPos.x(), v2_pos.windowPos.y(),
-                         v1_pos.color);
-                drawLine(v2_pos.windowPos.x(), v2_pos.windowPos.y(),
-                         v0_pos.windowPos.x(), v0_pos.windowPos.y(),
-                         v2_pos.color);
-            }
-        }
-    }
 }
 
-void Rasterizer::renderFace(std::vector<Payload> &payloads, const std::vector<int> &indices) {
-    for (int i = 0; i < indices.size(); i += 3) {
-        Payload p0 = payloads[indices[i]];
-        Payload p1 = payloads[indices[i + 1]];
-        Payload p2 = payloads[indices[i + 2]];
-
-        // Frustum Culling
-        if (camera->inFrustum(p0.clipPos, p1.clipPos, p2.clipPos)) {
-
-            // Homogeneous Space Clipping
-            std::vector<Payload> ps = clipHomogeneous(p0, p1, p2);
-
-            if (ps.empty()) {
-                continue;
-            }
-
-            // 透视除法
-            for (int i = 0; i < ps.size(); i++) {
-                ps[i].NDCPos = ps[i].clipPos / ps[i].clipPos.w();
-                ps[i].windowPos = viewPortMatrix * ps[i].NDCPos;
-            }
-
-            for (int j = 0; j < ps.size() - 2; j++) {
-                Payload t0 = ps[0];
-                Payload t1 = ps[j + 1];
-                Payload t2 = ps[j + 2];
-                drawTriangle(t0, t1, t2);
-            }
-
-//            drawTriangle(p0, p1, p2);
-        }
-    }
+void Rasterizer::renderFace(Payload &p0, Payload &p1, Payload &p2) {
+    drawTriangle(p0, p1, p2);
 }
 
 void Rasterizer::setVertexShader(std::unique_ptr<VertexShader> &vs) {

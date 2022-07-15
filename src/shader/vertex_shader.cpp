@@ -18,11 +18,16 @@ void NaiveVertexShader::setProjectMatrix(const Eigen::Matrix4f &project) {
     projectMatrix = project;
 }
 
-Vertex NaiveVertexShader::shade(const Vertex &vertex) {
+Payload NaiveVertexShader::shade(const Vertex &vertex) {
     /**
      * turn model space to Frustum space.
      * NDC space == Frustum space / w
      */
-    Eigen::Vector4f pos = projectMatrix * viewMatrix * modelMatrix * vertex.position;
-    return {pos, vertex.color, vertex.normal};
+    Payload p;
+    p.worldPos = modelMatrix * vertex.position;
+    p.viewPos = viewMatrix * p.worldPos;
+    p.clipPos = projectMatrix * p.viewPos;
+    p.normal = vertex.normal;
+    p.color = vertex.color;
+    return p;
 }

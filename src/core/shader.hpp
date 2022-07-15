@@ -23,7 +23,7 @@ public:
 
     virtual void setProjectMatrix(const Eigen::Matrix4f &project) = 0;
 
-    virtual Vertex shade(const Vertex &vertex) = 0;
+    virtual Payload shade(const Vertex &vertex) = 0;
 };
 
 class FragmentShader : public Shader {

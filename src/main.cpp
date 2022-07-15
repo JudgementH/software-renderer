@@ -33,7 +33,7 @@ int main() {
     std::vector<Vertex> vertices = {Vertex(Eigen::Vector4f(0, 1, 0, 1)),
                                     Vertex(Eigen::Vector4f(-1, -2, 0, 1)),
                                     Vertex(Eigen::Vector4f(1, -2, 0, 1))};
-//    Model test_model(vertices, {0, 1, 2});
+    Model test_model(vertices, {0, 1, 2});
 
     Rasterizer rasterizer(width, height, &camera);
     rasterizer.setRenderMode(RenderMode::FACE);

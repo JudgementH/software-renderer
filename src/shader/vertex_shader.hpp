@@ -10,9 +10,9 @@ public:
                       Eigen::Matrix4f view = Eigen::Matrix4f::Identity(),
                       Eigen::Matrix4f project = Eigen::Matrix4f::Identity());
 
-    Vertex shade(const Vertex &vertex);
+    Payload shade(const Vertex &vertex) override;
 
-    void setModelMatrix(const Eigen::Matrix4f &model);
-    void setViewMatrix(const Eigen::Matrix4f &view);
-    void setProjectMatrix(const Eigen::Matrix4f &project);
+    void setModelMatrix(const Eigen::Matrix4f &model) override;
+    void setViewMatrix(const Eigen::Matrix4f &view) override;
+    void setProjectMatrix(const Eigen::Matrix4f &project) override;
 };

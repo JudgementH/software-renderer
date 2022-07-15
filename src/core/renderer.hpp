@@ -26,16 +26,12 @@ enum class RenderMode {
 
 class Rasterizer : Renderer {
 private:
-    Payload shadeVertex(const Vertex &vertex);
 
+    void renderVertex(Payload &p0, Payload &p1, Payload &p2);
 
-    void renderVertex(std::vector<Payload> &payloads, const std::vector<int> &indices);
+    void renderEdge(Payload &p0, Payload &p1, Payload &p2);
 
-
-    void renderEdge(std::vector<Payload> &payloads, const std::vector<int> &indices);
-
-
-    void renderFace(std::vector<Payload> &payloads, const std::vector<int> &indices);
+    void renderFace(Payload &p0, Payload &p1, Payload &p2);
 
     float getDepth(const int &x, const int &y);
 
