@@ -2,8 +2,23 @@
 #include "renderer.hpp"
 #include "payload.hpp"
 
-Rasterizer::Rasterizer(int width, int height) : width(width), height(height)
-{
+const std::vector<Eigen::Vector4f> planes = {
+        // far
+        Eigen::Vector4f(0, 0, -1, -1),
+        // Near
+        Eigen::Vector4f(0, 0, 1, -1),
+        // left
+        Eigen::Vector4f(-1, 0, 0, -1),
+        // right
+        Eigen::Vector4f(1, 0, 0, -1),
+        // bottom
+        Eigen::Vector4f(0, -1, 0, -1),
+        // top
+        Eigen::Vector4f(0, 1, 0, -1)
+};
+
+
+Rasterizer::Rasterizer(int width, int height) : width(width), height(height) {
     aspect_ratio = static_cast<float>(width) / height;
     framebuffer.resize(width * height);
     zBuffer.resize(width * height);
@@ -17,155 +32,78 @@ Rasterizer::Rasterizer(int width, int height) : width(width), height(height)
     // TODO: defalut fragment shader
 }
 
-Rasterizer::Rasterizer(int width, int height, Camera *camera) : Rasterizer(width, height)
-{
+Rasterizer::Rasterizer(int width, int height, Camera *camera) : Rasterizer(width, height) {
     this->camera = camera;
 }
 
-Rasterizer::~Rasterizer()
-{
+Rasterizer::~Rasterizer() {
 }
 
-Payload Rasterizer::shadeVertex(const Vertex &vertex)
-{
-    Vertex temp_v = vertexShader->shade(vertex);
-    temp_v.position /= temp_v.position.w();
-    Eigen::Vector4f worldPos = vertexShader->modelMatrix * vertex.position;
-    Eigen::Vector4f viewPos = vertexShader->viewMatrix * worldPos;
-    Eigen::Vector4f clipPos = vertexShader->projectMatrix * viewPos;
-    Eigen::Vector4f NDCPos = temp_v.position;
-    Eigen::Vector4f windowPos = viewPortMatrix * temp_v.position;
-    Eigen::Vector3f normal = temp_v.normal;
-    Eigen::Vector4f color = temp_v.color;
-    Payload payload(worldPos,
-                    viewPos,
-                    clipPos,
-                    NDCPos,
-                    windowPos,
-                    color,
-                    normal);
-    return payload;
+Payload Rasterizer::shadeVertex(const Vertex &vertex) {
+    Payload p;
+    p.worldPos = vertexShader->modelMatrix * vertex.position;
+    p.viewPos = vertexShader->viewMatrix * p.worldPos;
+    p.clipPos = vertexShader->projectMatrix * p.viewPos;
+    p.normal = vertex.normal;
+    p.color = vertex.color;
+    return p;
 }
 
-std::vector<Eigen::Vector4f> &Rasterizer::render(std::vector<Vertex> &vertices)
-{
-    if (vertices.size() % 3 != 0)
-    {
-        throw "目前只支持绘制三角形";
-    }
-    if (vertexShader == nullptr)
-    {
-        throw "没有VertexShader";
-    }
-
-    // vertex shader
-    std::vector<Payload> payloads;
-    for (auto &v : vertices)
-    {
-        Payload p = shadeVertex(v);
-        payloads.emplace_back(p);
-    }
-
-    if (renderMode == RenderMode::VERTEX)
-    {
-        renderVertex(payloads);
-    }
-    else if (renderMode == RenderMode::EDGE)
-    {
-        renderEdge(payloads);
-    }
-    else if (renderMode == RenderMode::FACE)
-    {
-        renderFace(payloads);
-    }
-
-    return framebuffer;
-}
-
-std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model)
-{
-    if (vertexShader == nullptr)
-    {
+std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
+    if (vertexShader == nullptr) {
         std::cout << "没有vertexShader" << std::endl;
         throw std::exception();
     }
 
-    // 1. turn vertices from model space to NDC space
+    // turn vertices from model space to NDC space
     std::vector<Payload> payloads;
 
     // TODO:可多线程
-    for (int i = 0; i < model.vertices.size(); i++)
-    {
+    for (int i = 0; i < model.vertices.size(); i++) {
         Payload p = shadeVertex(model.vertices[i]);
         payloads.emplace_back(p);
     }
 
     // 2. fragment shader
-    if (renderMode == RenderMode::VERTEX)
-    {
+    if (renderMode == RenderMode::VERTEX) {
         renderVertex(payloads, model.indices);
-    }
-    else if (renderMode == RenderMode::EDGE)
-    {
+    } else if (renderMode == RenderMode::EDGE) {
         renderEdge(payloads, model.indices);
-    }
-    else if (renderMode == RenderMode::FACE)
-    {
+    } else if (renderMode == RenderMode::FACE) {
         renderFace(payloads, model.indices);
     }
 
     return framebuffer;
 }
 
-void Rasterizer::renderVertex(std::vector<Payload> &payloads)
-{
-    for (auto &p : payloads)
-    {
-        if (p.windowPos.x() >= 0 && p.windowPos.x() < width && p.windowPos.y() >= 0 && p.windowPos.y() < height)
-        {
+void Rasterizer::renderVertex(std::vector<Payload> &payloads, const std::vector<int> &indices) {
+    for (auto &p: payloads) {
+        if (p.windowPos.x() >= 0 && p.windowPos.x() < width && p.windowPos.y() >= 0 && p.windowPos.y() < height) {
             setPixel(p.windowPos.x(), p.windowPos.y(), p.color);
         }
     }
 }
 
-void Rasterizer::renderVertex(std::vector<Payload> &payloads, const std::vector<int> &indices)
-{
-    for (auto &p : payloads)
-    {
-        if (p.windowPos.x() >= 0 && p.windowPos.x() < width && p.windowPos.y() >= 0 && p.windowPos.y() < height)
-        {
-            setPixel(p.windowPos.x(), p.windowPos.y(), p.color);
-        }
-    }
-}
 
-void Rasterizer::renderEdge(std::vector<Payload> &payloads)
-{
-    for (int i = 0; i < payloads.size(); i += 3)
-    {
-        for (int j = 0; j < 3; j++)
-        {
-            auto v0_pos = payloads[i + j].windowPos;
-            auto v1_pos = payloads[i + (j + 1) % 3].windowPos;
-            drawLine(v0_pos.x(), v0_pos.y(), v1_pos.x(), v1_pos.y(), payloads[i + j].color);
-        }
-    }
-}
-
-void Rasterizer::renderEdge(std::vector<Payload> &payloads, const std::vector<int> &indices)
-{
-    for (int i = 0; i < indices.size(); i += 3)
-    {
+void Rasterizer::renderEdge(std::vector<Payload> &payloads, const std::vector<int> &indices) {
+    for (int i = 0; i < indices.size(); i += 3) {
         Payload p0 = payloads[indices[i]];
         Payload p1 = payloads[indices[i + 1]];
         Payload p2 = payloads[indices[i + 2]];
-        if (camera->inFrustum(p0.clipPos, p1.clipPos, p2.clipPos))
-        {
+        if (camera->inFrustum(p0.clipPos, p1.clipPos, p2.clipPos)) {
 
             std::vector<Payload> ps = clipHomogeneous(p0, p1, p2);
+            if (ps.empty()) {
+                continue;
+            }
 
-            for (int j = 0; j < ps.size() - 2; j++)
-            {
+            // 透视除法
+            for (int i = 0; i < ps.size(); i++) {
+                ps[i].NDCPos = ps[i].clipPos / ps[i].clipPos.w();
+                ps[i].windowPos = viewPortMatrix * ps[i].NDCPos;
+            }
+
+            for (int j = 0; j < ps.size() - 2; j++) {
                 Payload v0_pos = ps[0];
                 Payload v1_pos = ps[j + 1];
                 Payload v2_pos = ps[j + 2];
@@ -183,82 +121,72 @@ void Rasterizer::renderEdge(std::vector<Payload> &payloads, const std::vector<in
     }
 }
 
-void Rasterizer::renderFace(std::vector<Payload> &payloads)
-{
-    for (int i = 0; i < payloads.size(); i += 3)
-    {
-        drawTriangle(payloads[i], payloads[i + 1], payloads[i + 2]);
-    }
-}
-
-void Rasterizer::renderFace(std::vector<Payload> &payloads, const std::vector<int> &indices)
-{
-    for (int i = 0; i < indices.size(); i += 3)
-    {
+void Rasterizer::renderFace(std::vector<Payload> &payloads, const std::vector<int> &indices) {
+    for (int i = 0; i < indices.size(); i += 3) {
         Payload p0 = payloads[indices[i]];
         Payload p1 = payloads[indices[i + 1]];
         Payload p2 = payloads[indices[i + 2]];
 
         // Frustum Culling
-        if (camera->inFrustum(p0.clipPos, p1.clipPos, p2.clipPos))
-        {
+        if (camera->inFrustum(p0.clipPos, p1.clipPos, p2.clipPos)) {
 
             // Homogeneous Space Clipping
             std::vector<Payload> ps = clipHomogeneous(p0, p1, p2);
 
-            for (int j = 0; j < ps.size() - 2; j++)
-            {
+            if (ps.empty()) {
+                continue;
+            }
+
+            // 透视除法
+            for (int i = 0; i < ps.size(); i++) {
+                ps[i].NDCPos = ps[i].clipPos / ps[i].clipPos.w();
+                ps[i].windowPos = viewPortMatrix * ps[i].NDCPos;
+            }
+
+            for (int j = 0; j < ps.size() - 2; j++) {
                 Payload t0 = ps[0];
                 Payload t1 = ps[j + 1];
                 Payload t2 = ps[j + 2];
                 drawTriangle(t0, t1, t2);
             }
 
-            // drawTriangle(p0, p1, p2);
+//            drawTriangle(p0, p1, p2);
         }
     }
 }
 
-void Rasterizer::setVertexShader(std::unique_ptr<VertexShader> &vs)
-{
+void Rasterizer::setVertexShader(std::unique_ptr<VertexShader> &vs) {
     vertexShader = std::move(vs);
 }
 
-void Rasterizer::setFragmentShader(std::unique_ptr<FragmentShader> &fs)
-{
+void Rasterizer::setFragmentShader(std::unique_ptr<FragmentShader> &fs) {
     fragmentShader = std::move(fs);
 }
 
-void Rasterizer::setViewMatrix(Eigen::Matrix4f &view)
-{
+void Rasterizer::setViewMatrix(Eigen::Matrix4f &view) {
     vertexShader->setViewMatrix(view);
 }
 
-void Rasterizer::setProjectMatrix(Eigen::Matrix4f &project)
-{
+void Rasterizer::setProjectMatrix(Eigen::Matrix4f &project) {
     vertexShader->setProjectMatrix(project);
 }
 
-void Rasterizer::clearFrameBuffer()
-{
+void Rasterizer::clearFrameBuffer() {
     std::fill(framebuffer.begin(), framebuffer.end(), Eigen::Vector4f(0, 0, 0, 0));
 }
 
-void Rasterizer::clearDepthBuffer()
-{
+void Rasterizer::clearDepthBuffer() {
     std::fill(zBuffer.begin(), zBuffer.end(), -1.0f);
 }
 
-void Rasterizer::setPixel(int x, int y, Eigen::Vector4f color)
-{
+void Rasterizer::setPixel(int x, int y, Eigen::Vector4f color) {
     /**
      * @brief set Screen framebuffer
      *
      */
     x = (x == width) ? x - 1 : x;
     y = (y == height) ? y - 1 : y;
-    if (x < 0 || x >= width || y < 0 || y >= height)
-    {
+    if (x < 0 || x >= width || y < 0 || y >= height) {
 
         // std::cout << "My Exception setPixel() OutOfRange\n";
         return;
@@ -267,8 +195,7 @@ void Rasterizer::setPixel(int x, int y, Eigen::Vector4f color)
     framebuffer[index] = color;
 }
 
-void Rasterizer::drawLine(int x0, int y0, int x1, int y1, const Eigen::Vector4f color)
-{
+void Rasterizer::drawLine(int x0, int y0, int x1, int y1, const Eigen::Vector4f color) {
     /**
      * @brief Bresenham’s 直线算法
      *
@@ -276,15 +203,13 @@ void Rasterizer::drawLine(int x0, int y0, int x1, int y1, const Eigen::Vector4f 
 
     // k [+-1, +-infinity] to [0, +-1]
     bool steep = false;
-    if (std::abs(x0 - x1) < std::abs(y0 - y1))
-    {
+    if (std::abs(x0 - x1) < std::abs(y0 - y1)) {
         std::swap(x0, y0);
         std::swap(x1, y1);
         steep = true;
     }
 
-    if (x0 > x1)
-    {
+    if (x0 > x1) {
         std::swap(x0, x1);
         std::swap(y0, y1);
     }
@@ -296,35 +221,27 @@ void Rasterizer::drawLine(int x0, int y0, int x1, int y1, const Eigen::Vector4f 
 
     // k [0, +-1] -> [0, 1]
     int yi = 1;
-    if (dy < 0)
-    {
+    if (dy < 0) {
         yi = -1;
         dy = -dy;
     }
 
-    if (steep)
-    {
-        for (int x = x0; x <= x1; x++)
-        {
+    if (steep) {
+        for (int x = x0; x <= x1; x++) {
             setPixel(y, x, color);
 
             error += dy;
-            if ((error << 1) > dx)
-            {
+            if ((error << 1) > dx) {
                 y += yi;
                 error -= dx;
             }
         }
-    }
-    else
-    {
-        for (int x = x0; x <= x1; x++)
-        {
+    } else {
+        for (int x = x0; x <= x1; x++) {
             setPixel(x, y, color);
 
             error += dy;
-            if ((error << 1) > dx)
-            {
+            if ((error << 1) > dx) {
                 y += yi;
                 error -= dx;
             }
@@ -332,8 +249,7 @@ void Rasterizer::drawLine(int x0, int y0, int x1, int y1, const Eigen::Vector4f 
     }
 }
 
-void Rasterizer::drawTriangle(const Triangle triangle)
-{
+void Rasterizer::drawTriangle(const Triangle triangle) {
 
     // TODO: 目前为随机值，有待修改
     Eigen::Vector4f color = (Eigen::Vector4f::Random() + Eigen::Vector4f::Ones()) / 2.0f;
@@ -344,20 +260,21 @@ void Rasterizer::drawTriangle(const Triangle triangle)
     int boxMaxX = triangle.boxMax.x();
     int boxMaxY = triangle.boxMax.y();
 
-    for (int y = boxMinY; y <= boxMaxY; y++)
-    {
-        for (int x = boxMinX; x <= boxMaxX; x++)
-        {
-            if (triangle.inside(x, y))
-            {
+    for (int y = boxMinY; y <= boxMaxY; y++) {
+        for (int x = boxMinX; x <= boxMaxX; x++) {
+            if (triangle.inside(x, y)) {
                 setPixel(x, y, color);
             }
         }
     }
 }
 
-void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, const Payload &payload2)
-{
+void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, const Payload &payload2) {
+    if (fragmentShader == nullptr) {
+        std::cout << "fragmentShader 为空" << std::endl;
+        throw std::exception();
+    }
+
     Triangle triangle(Vertex(payload0.windowPos, payload0.color, payload0.normal),
                       Vertex(payload1.windowPos, payload1.color, payload1.normal),
                       Vertex(payload2.windowPos, payload2.color, payload2.normal));
@@ -368,35 +285,17 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
     int boxMinY = int(triangle.boxMin.y());
     int boxMaxY = int(triangle.boxMax.y());
 
-    boxMinX = std::clamp(boxMinX, 0, width - 1);
-    boxMaxX = std::clamp(boxMaxX, 0, width - 1);
-    boxMinY = std::clamp(boxMinY, 0, height - 1);
-    boxMaxY = std::clamp(boxMaxY, 0, height - 1);
-
     // TODO: 并行化 最后深度测试
     // TODO: 背面剔除
-    for (int y = boxMinY; y <= boxMaxY; y++)
-    {
-        for (int x = boxMinX; x <= boxMaxX; x++)
-        {
+    for (int y = boxMinY; y <= boxMaxY; y++) {
+        for (int x = boxMinX; x <= boxMaxX; x++) {
 
-            if (triangle.inside(x, y))
-            {
-                auto [w0, w1, w2] = triangle.computeBarycentric2D(x, y);
+            if (triangle.inside(x, y)) {
+                auto[w0, w1, w2] = triangle.computeBarycentric2D(x, y);
                 Payload p = w0 * payload0 + w1 * payload1 + w2 * payload2;
-                if (fragmentShader == nullptr)
-                {
-                    std::cout << "fragmentShader 为空" << std::endl;
-                    throw std::exception();
-                }
 
                 //深度测试
-                if (p.windowPos.z() > 1 || p.windowPos.z() < -1)
-                {
-                    continue;
-                }
-                if (p.windowPos.z() > getDepth(x, y))
-                {
+                if (p.windowPos.z() > getDepth(x, y)) {
                     setDepth(x, y, p.windowPos.z());
                     Eigen::Vector4f color = fragmentShader->shade(p);
                     setPixel(x, y, color);
@@ -406,56 +305,34 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
     }
 }
 
-void Rasterizer::setRenderMode(RenderMode mode)
-{
+void Rasterizer::setRenderMode(RenderMode mode) {
     renderMode = mode;
 }
 
-float Rasterizer::getDepth(const int &x, const int &y)
-{
-    if (x < 0 || x >= width || y < 0 || y >= height)
-    {
+float Rasterizer::getDepth(const int &x, const int &y) {
+    if (x < 0 || x >= width || y < 0 || y >= height) {
         return 1.0;
     }
     int index = x + y * width;
     return zBuffer[index];
 }
 
-void Rasterizer::setDepth(const int &x, const int &y, const float &depth)
-{
-    if (x < 0 || x >= width || y < 0 || y >= height)
-    {
+void Rasterizer::setDepth(const int &x, const int &y, const float &depth) {
+    if (x < 0 || x >= width || y < 0 || y >= height) {
         return;
     }
     int index = x + y * width;
     zBuffer[index] = depth;
 }
 
-std::vector<Payload> Rasterizer::clipHomogeneous(const Payload &p0, const Payload &p1, const Payload &p2)
-{
+std::vector<Payload> Rasterizer::clipHomogeneous(const Payload &p0, const Payload &p1, const Payload &p2) {
     std::vector<Payload> output = {p0, p1, p2};
 
-    const std::vector<Eigen::Vector4f> planes = {
-        // Near
-        Eigen::Vector4f(0, 0, -1, -1),
-        // far
-        Eigen::Vector4f(0, 0, 1, -1),
-        // right
-        Eigen::Vector4f(-1, 0, 0, -1),
-        // left
-        Eigen::Vector4f(1, 0, 0, -1),
-        // top
-        Eigen::Vector4f(0, -1, 0, -1),
-        // bottom
-        Eigen::Vector4f(0, 1, 0, -1)};
-
-    for (int i = 0; i < planes.size(); i++)
-    {
+    for (int i = 0; i < planes.size(); i++) {
         std::vector<Payload> input(output);
         output.clear();
 
-        for (int j = 0; j < input.size(); j++)
-        {
+        for (int j = 0; j < input.size(); j++) {
             int current_index = j;
             int previous_index = (j + input.size() - 1) % input.size();
 
@@ -466,15 +343,13 @@ std::vector<Payload> Rasterizer::clipHomogeneous(const Payload &p0, const Payloa
             float dis_P = math::ProjectDistance(planes[i], P.clipPos);
             float dis_Q = math::ProjectDistance(planes[i], Q.clipPos);
 
-            if (dis_P * dis_Q < 0)
-            {
+            if (dis_P * dis_Q < 0) {
                 // cross the plane
                 Payload intersect = Payload::Lerp(P, Q, (dis_P / (dis_P - dis_Q)));
                 output.emplace_back(intersect);
             }
 
-            if (dis_Q >= 0)
-            {
+            if (dis_Q >= 0) {
                 // Q in plane
                 output.emplace_back(Q);
             }
@@ -483,3 +358,5 @@ std::vector<Payload> Rasterizer::clipHomogeneous(const Payload &p0, const Payloa
 
     return output;
 }
+
+

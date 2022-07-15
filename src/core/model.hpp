@@ -7,9 +7,11 @@
 class Model
 {
 public:
-    int shape_num;
+    int shape_num{};
     std::vector<Vertex> vertices;
     std::vector<int> indices;
 
     Model(const std::string& filename);
+
+    Model(std::vector<Vertex> vertices,std::vector<int> indices);
 };

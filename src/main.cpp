@@ -18,7 +18,7 @@ int main() {
     Window window(width, height, title);
 
     Eigen::Vector3f pos(0.4f, 0.5f, 2.0f);
-    // Eigen::Vector3f lookat(0.8f, 0.5f, 4.0f);
+//    Eigen::Vector3f pos(0.0f, 0.0f, 0.4f);
     Eigen::Vector3f lookat(0.0f, 0.0f, 0.0f);
     Eigen::Vector3f up(0.0f, 1.0f, 0.0f);
     float fov = 60.0f;
@@ -30,8 +30,13 @@ int main() {
 
     Model model(obj_file_path);
 
+    std::vector<Vertex> vertices = {Vertex(Eigen::Vector4f(0, 1, 0, 1)),
+                                    Vertex(Eigen::Vector4f(-1, -2, 0, 1)),
+                                    Vertex(Eigen::Vector4f(1, -2, 0, 1))};
+//    Model test_model(vertices, {0, 1, 2});
+
     Rasterizer rasterizer(width, height, &camera);
-    rasterizer.setRenderMode(RenderMode::EDGE);
+    rasterizer.setRenderMode(RenderMode::FACE);
 
     std::unique_ptr<VertexShader> vs = std::make_unique<NaiveVertexShader>();
     rasterizer.setVertexShader(vs);

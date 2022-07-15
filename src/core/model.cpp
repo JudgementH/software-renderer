@@ -1,4 +1,6 @@
 #include "model.hpp"
+
+#include <utility>
 #include "../loader/obj_loader.hpp"
 
 Model::Model(const std::string &filename) {
@@ -37,6 +39,11 @@ Model::Model(const std::string &filename) {
             }
         }
     } else {
-        throw "不支持的文件格式";
+        throw std::exception();
     }
+}
+
+Model::Model(std::vector<Vertex> vertices, std::vector<int> indices)
+        : vertices(std::move(vertices)), indices(std::move(indices)) {
+
 }

@@ -37,7 +37,7 @@ namespace math {
         return (1.0f - t) * x1 + t * x2;
     }
 
-    inline float ProjectDistance(Eigen::Vector4f plane, Eigen::Vector4f p) {
+    inline float ProjectDistance(const Eigen::Vector4f& plane, const Eigen::Vector4f& p) {
         return plane.dot(p);
     }
 
