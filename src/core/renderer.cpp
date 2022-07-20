@@ -45,19 +45,23 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
         throw std::exception();
     }
 
-    // turn vertices from model space to NDC space
-    std::vector<Payload> payloads;
-    payloads.resize(model.vertices.size());
+    //for every face
+    for (int i = 0; i < model.face_num; i++) {
+        Triangle face = model.getFace(i);
 
-#pragma omp parallel for
-    for (int i = 0; i < model.vertices.size(); i++) {
-        payloads[i] = vertexShader->shade(model.vertices[i]);
-    }
+        std::vector<Payload> payloads;
+        payloads.resize(3);
 
-    for (int i = 0; i < model.indices.size(); i += 3) {
-        Payload p0 = payloads[model.indices[i]];
-        Payload p1 = payloads[model.indices[i + 1]];
-        Payload p2 = payloads[model.indices[i + 2]];
+        // turn vertices from model space to NDC space
+        //TODO: 反而减速？
+//#pragma omp parallel for
+        for (int i = 0; i < 3; i++) {
+            payloads[i] = vertexShader->shade(face.vertices[i]);
+        }
+
+        Payload& p0 = payloads[0];
+        Payload& p1 = payloads[1];
+        Payload& p2 = payloads[2];
 
         // Frustum Culling
         if (!camera->inFrustum(p0.clipPos, p1.clipPos, p2.clipPos)) {
@@ -242,6 +246,15 @@ void Rasterizer::drawTriangle(const Triangle triangle) {
 }
 
 void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, const Payload &payload2) {
+
+    float eps = 1e-6;
+    if (std::abs(payload0.worldPos.z() - 1.0f) < eps &&
+        std::abs(payload1.worldPos.z() - 1.0f) < eps &&
+        std::abs(payload2.worldPos.z() - 1.0f) < eps) {
+
+        std::cout << "nihao" << std::endl;
+    }
+
     if (fragmentShader == nullptr) {
         std::cout << "fragmentShader 为空" << std::endl;
         throw std::exception();
@@ -259,12 +272,24 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
 
     // TODO: 并行化 最后深度测试
     // TODO: 背面剔除
+//#pragma omp parallel for
     for (int y = boxMinY; y <= boxMaxY; y++) {
         for (int x = boxMinX; x <= boxMaxX; x++) {
 
             if (triangle.inside(x, y)) {
+                if (y == 350) {
+                    std::cout << "nihao" << std::endl;
+                }
                 auto[w0, w1, w2] = triangle.computeBarycentric2D(x, y);
                 Payload p = w0 * payload0 + w1 * payload1 + w2 * payload2;
+                float Z = 1 / (w0 / payload0.clipPos.w() + w1 / payload1.clipPos.w() + w2 / payload2.clipPos.w());
+                p.windowPos.z() = (w0 * payload0.windowPos.z() / payload0.clipPos.w() +
+                                   w1 * payload1.windowPos.z() / payload1.clipPos.w() +
+                                   w2 * payload2.windowPos.z() / payload2.clipPos.w()) * Z;
+
+                p.texcood = Z * (w0 * payload0.texcood / payload0.clipPos.w() +
+                                 w1 * payload1.texcood / payload1.clipPos.w() +
+                                 w2 * payload2.texcood / payload2.clipPos.w());
 
                 //深度测试
                 if (p.windowPos.z() > getDepth(x, y)) {

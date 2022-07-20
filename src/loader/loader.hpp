@@ -23,17 +23,18 @@ namespace loader
         float y;
     };
 
-    struct Vertex
-    {
-        Position position;
-        Normal normal;
-        Texcoord texcoord;
+    struct Index{
+        int position_index;
+        int normal_index;
+        int texcoord_index;
     };
 
     struct Shape
     {
-        std::vector<Vertex> vertices;
-        std::vector<int> indices;
+        std::vector<Position> position_list;
+        std::vector<Normal> normal_list;
+        std::vector<Texcoord> texcoord_list;
+        std::vector<loader::Index> indices;
         bool has_normal = false;
         bool has_texcoord = false;
     };

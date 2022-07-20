@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Eigen/Eigen>
+#include <memory>
 
 class Texture {
 public:
@@ -8,7 +9,6 @@ public:
     int height;
     int channels;
     unsigned char *data = nullptr;
-
 
     Texture() = default;
 

@@ -1,9 +1,10 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 
 #include <tiny_obj_loader.h>
+#include <iostream>
 #include "obj_loader.hpp"
 
-loader::OBJLoader::OBJLoader(const std::string inputfile) : filename(inputfile) {
+loader::OBJLoader::OBJLoader(std::string inputfile) : filename(inputfile) {
     tinyobj::ObjReaderConfig reader_config;
 
     tinyobj::ObjReader reader;
@@ -25,13 +26,19 @@ loader::OBJLoader::OBJLoader(const std::string inputfile) : filename(inputfile) 
     // Loop over shapes
     for (size_t s = 0; s < shapes.size(); s++) {
         Shape shape;
-        shape.vertices.resize(attrib.vertices.size() / 3);
+
+        shape.indices.resize(shapes[s].mesh.indices.size());
+        shape.position_list.resize(attrib.vertices.size());
+        shape.normal_list.resize(attrib.normals.size());
+        shape.texcoord_list.resize(attrib.texcoords.size());
+
         // Loop over faces(polygon)
         size_t index_offset = 0;
         for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
             size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
-            if (num_face_vertices != fv) {
-                throw "目前仅支持三角形";
+            if (fv != 3) {
+                std::cout << "目前只支持三角形\n";
+                throw std::exception();
             }
 
             // Loop over vertices in the face.
@@ -39,24 +46,24 @@ loader::OBJLoader::OBJLoader(const std::string inputfile) : filename(inputfile) 
                 // access to vertex
                 tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
 
-                shape.indices.emplace_back(idx.vertex_index);
-                shape.vertices[idx.vertex_index].position = {float(attrib.vertices[3 * size_t(idx.vertex_index) + 0]),
-                                                             float(attrib.vertices[3 * size_t(idx.vertex_index) + 1]),
-                                                             float(attrib.vertices[3 * size_t(idx.vertex_index) + 2])};
+                shape.indices[index_offset + v] = {idx.vertex_index, idx.normal_index, idx.texcoord_index};
+                shape.position_list[idx.vertex_index] = {float(attrib.vertices[3 * size_t(idx.vertex_index) + 0]),
+                                                         float(attrib.vertices[3 * size_t(idx.vertex_index) + 1]),
+                                                         float(attrib.vertices[3 * size_t(idx.vertex_index) + 2])};
 
                 // Check if `normal_index` is zero or positive. negative = no normal data
                 if (idx.normal_index >= 0) {
                     shape.has_normal = true;
-                    shape.vertices[idx.vertex_index].normal = {float(attrib.normals[3 * size_t(idx.normal_index) + 0]),
-                                                               float(attrib.normals[3 * size_t(idx.normal_index) + 1]),
-                                                               float(attrib.normals[3 * size_t(idx.normal_index) + 2])};
+                    shape.normal_list[idx.normal_index] = {float(attrib.normals[3 * size_t(idx.normal_index) + 0]),
+                                                           float(attrib.normals[3 * size_t(idx.normal_index) + 1]),
+                                                           float(attrib.normals[3 * size_t(idx.normal_index) + 2])};
 
                 }
 
                 // Check if `texcoord_index` is zero or positive. negative = no texcoord data
                 if (idx.texcoord_index >= 0) {
                     shape.has_texcoord = true;
-                    shape.vertices[idx.vertex_index].texcoord = {
+                    shape.texcoord_list[idx.texcoord_index] = {
                             float(attrib.texcoords[2 * size_t(idx.texcoord_index) + 0]),
                             float(attrib.texcoords[2 * size_t(idx.texcoord_index) + 1])};
                 }

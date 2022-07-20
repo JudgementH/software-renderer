@@ -1,3 +1,4 @@
+#include <iostream>
 #include "texture.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -7,6 +8,7 @@
 Texture::Texture(const std::string &path) {
     data = stbi_load(path.c_str(), &width, &height, &channels, 0);
     if (channels != 3) {
+        std::cout << "channels" << channels << std::endl;
         throw std::exception();
     }
 }
