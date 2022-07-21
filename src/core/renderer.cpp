@@ -17,7 +17,6 @@ const std::vector<Eigen::Vector4f> planes = {
         Eigen::Vector4f(0, 1, 0, -1)
 };
 
-
 Rasterizer::Rasterizer(int width, int height) : width(width), height(height) {
     aspect_ratio = static_cast<float>(width) / height;
     framebuffer.resize(width * height);
@@ -59,9 +58,9 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
             payloads[i] = vertexShader->shade(face.vertices[i]);
         }
 
-        Payload& p0 = payloads[0];
-        Payload& p1 = payloads[1];
-        Payload& p2 = payloads[2];
+        Payload &p0 = payloads[0];
+        Payload &p1 = payloads[1];
+        Payload &p2 = payloads[2];
 
         // Frustum Culling
         if (!camera->inFrustum(p0.clipPos, p1.clipPos, p2.clipPos)) {
@@ -246,9 +245,6 @@ void Rasterizer::drawTriangle(const Triangle triangle) {
 }
 
 void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, const Payload &payload2) {
-
-    float eps = 1e-6;
-
     if (fragmentShader == nullptr) {
         std::cout << "fragmentShader 为空" << std::endl;
         throw std::exception();
@@ -258,6 +254,11 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
                       Vertex(payload1.windowPos, payload1.color, payload1.normal),
                       Vertex(payload2.windowPos, payload2.color, payload2.normal));
 
+    // FaceCulling
+    if(triangle.crossBack(Eigen::Vector3f(0, 0, -1))){
+        return;
+    }
+
     int boxMinX = int(triangle.boxMin.x());
     int boxMaxX = int(triangle.boxMax.x());
 
@@ -265,26 +266,37 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
     int boxMaxY = int(triangle.boxMax.y());
 
     // TODO: 并行化 最后深度测试
-    // TODO: 背面剔除
 //#pragma omp parallel for
     for (int y = boxMinY; y <= boxMaxY; y++) {
         for (int x = boxMinX; x <= boxMaxX; x++) {
 
             if (triangle.inside(x, y)) {
                 auto[w0, w1, w2] = triangle.computeBarycentric2D(x, y);
-                Payload p = w0 * payload0 + w1 * payload1 + w2 * payload2;
                 float Z = 1 / (w0 / payload0.clipPos.w() + w1 / payload1.clipPos.w() + w2 / payload2.clipPos.w());
+                Payload p = w0 * payload0 + w1 * payload1 + w2 * payload2;
+
+                // Perspective Correction
                 p.windowPos.z() = (w0 * payload0.windowPos.z() / payload0.clipPos.w() +
                                    w1 * payload1.windowPos.z() / payload1.clipPos.w() +
                                    w2 * payload2.windowPos.z() / payload2.clipPos.w()) * Z;
 
-                p.texcood = Z * (w0 * payload0.texcood / payload0.clipPos.w() +
-                                 w1 * payload1.texcood / payload1.clipPos.w() +
-                                 w2 * payload2.texcood / payload2.clipPos.w());
-
                 //深度测试
                 if (p.windowPos.z() > getDepth(x, y)) {
                     setDepth(x, y, p.windowPos.z());
+
+                    p.texcood = Z * (w0 * payload0.texcood / payload0.clipPos.w() +
+                                     w1 * payload1.texcood / payload1.clipPos.w() +
+                                     w2 * payload2.texcood / payload2.clipPos.w());
+
+                    p.normal = Z * (w0 * payload0.normal / payload0.clipPos.w() +
+                                    w1 * payload1.normal / payload1.clipPos.w() +
+                                    w2 * payload2.normal / payload2.clipPos.w());
+
+                    p.color = Z * (w0 * payload0.color / payload0.clipPos.w() +
+                                   w1 * payload1.color / payload1.clipPos.w() +
+                                   w2 * payload2.color / payload2.clipPos.w());
+
+
                     Eigen::Vector4f color = fragmentShader->shade(p);
                     setPixel(x, y, color);
                 }

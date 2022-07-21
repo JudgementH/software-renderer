@@ -72,16 +72,7 @@ Eigen::Matrix4f Camera::getPerspectiveMatrix() const {
      *  camera cone is symmetric , so thera is no translation
      *
      */
-    float top = -n * std::tan(math::Degree2Radian(fov / 2.0f));
-    float bottom = -top;
-    float right = top * aspect;
-    float left = -right;
-    Eigen::Matrix4f P;
-    P << (2 * n) / (right - left), 0, -(right + left) / (right - left), 0,
-            0, (2 * n) / (top - bottom), -(top + bottom) / (top - bottom), 0,
-            0, 0, (n + f) / (n - f), -(2 * n * f) / (n - f),
-            0, 0, 1, 0;
-    return P;
+    return math::GetPerspectiveMatrix(n, f, fov, aspect);
 }
 
 void Camera::moveForward(float distance) {
@@ -93,7 +84,7 @@ void Camera::moveRight(float distance) {
 }
 
 void Camera::moveUp(float distance) {
-    position += y * distance;
+    position += worldUp * distance;
 }
 
 void Camera::rotatePitch(float angle) {
@@ -124,7 +115,7 @@ void Camera::updateXYZ() {
 }
 
 void Camera::keyHnadle(int param) {
-    // std::cout << "pressed: " << param << std::endl;
+//    std::cout << "pressed: " << param << std::endl;
     if (param == int('w')) {
         moveForward(keySensitivity);
     } else if (param == int('a')) {
@@ -133,6 +124,10 @@ void Camera::keyHnadle(int param) {
         moveForward(-keySensitivity);
     } else if (param == int('d')) {
         moveRight(keySensitivity);
+    } else if (param == int('x')) {
+        moveUp(keySensitivity);
+    } else if (param == int('z')) {
+        moveUp(-keySensitivity);
     }
 }
 
@@ -147,7 +142,6 @@ void Camera::mouseHandle(int param, int x, int y) {
     rotateYaw(-dx * mouseSensitivity);
     window->setCursorPosition(centerX, centerY);
 }
-
 
 
 bool Camera::inFrustum(const Eigen::Vector4f &clipPos0, const Eigen::Vector4f &clipPos1,

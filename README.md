@@ -11,8 +11,9 @@ vcpkg
 + zBuffer Test
 + 视锥剔除
 + 齐次空间裁剪（注意判空）
++ 透视矫正
 
 
 # TODO
-+ 纹理仿射映射和透视映射
 + 多线程fragment shader
++ 输入卡顿

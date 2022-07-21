@@ -1,11 +1,12 @@
 #pragma once
+
 #include <vector>
 #include "vertex.hpp"
 
-class Triangle
-{
+class Triangle {
 public:
     Vertex vertices[3];
+    Eigen::Vector3f normal;
     Eigen::Vector3f boxMin;
     Eigen::Vector3f boxMax;
 
@@ -13,6 +14,8 @@ public:
 
     bool inside(float x, float y) const;
 
+    bool crossBack(Eigen::Vector3f ray) const;
+
     std::tuple<float, float, float> computeBarycentric2D(float x, float y);
-    
+
 };
