@@ -33,7 +33,7 @@ int main() {
 
     Model model(obj_file_path);
 //    Texture texture("models/spot/spot_texture.png");
-    Texture texture("models/Crate/test.jpg");
+    Texture texture("models/Crate/crate_1.jpg");
     model.setTexture(texture);
 
     std::vector<Vertex> vertices = {Vertex(Eigen::Vector4f(0, 1, 0, 1)),

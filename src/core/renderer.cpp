@@ -248,12 +248,6 @@ void Rasterizer::drawTriangle(const Triangle triangle) {
 void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, const Payload &payload2) {
 
     float eps = 1e-6;
-    if (std::abs(payload0.worldPos.z() - 1.0f) < eps &&
-        std::abs(payload1.worldPos.z() - 1.0f) < eps &&
-        std::abs(payload2.worldPos.z() - 1.0f) < eps) {
-
-        std::cout << "nihao" << std::endl;
-    }
 
     if (fragmentShader == nullptr) {
         std::cout << "fragmentShader 为空" << std::endl;
@@ -277,9 +271,6 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
         for (int x = boxMinX; x <= boxMaxX; x++) {
 
             if (triangle.inside(x, y)) {
-                if (y == 350) {
-                    std::cout << "nihao" << std::endl;
-                }
                 auto[w0, w1, w2] = triangle.computeBarycentric2D(x, y);
                 Payload p = w0 * payload0 + w1 * payload1 + w2 * payload2;
                 float Z = 1 / (w0 / payload0.clipPos.w() + w1 / payload1.clipPos.w() + w2 / payload2.clipPos.w());

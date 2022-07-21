@@ -28,9 +28,9 @@ loader::OBJLoader::OBJLoader(std::string inputfile) : filename(inputfile) {
         Shape shape;
 
         shape.indices.resize(shapes[s].mesh.indices.size());
-        shape.position_list.resize(attrib.vertices.size());
-        shape.normal_list.resize(attrib.normals.size());
-        shape.texcoord_list.resize(attrib.texcoords.size());
+        shape.position_list.resize(attrib.vertices.size() / 3);
+        shape.normal_list.resize(attrib.normals.size() / 3);
+        shape.texcoord_list.resize(attrib.texcoords.size() / 2);
 
         // Loop over faces(polygon)
         size_t index_offset = 0;
