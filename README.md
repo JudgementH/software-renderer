@@ -1,3 +1,9 @@
+# 操作说明
++ w/a/s/d 前左后右
++ x 上升
++ z 下降
++ 鼠标控制视角
+
 # Package manager
 vcpkg
 

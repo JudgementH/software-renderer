@@ -43,10 +43,20 @@ Camera::Camera(Window *window,
 
 void Camera::update() {
     // update key
-
+    if (window->is_pressed('w')) {
+        moveForward(keySensitivity);
+    } else if (window->is_pressed('a')) {
+        moveRight(-keySensitivity);
+    } else if (window->is_pressed('s')) {
+        moveForward(-keySensitivity);
+    } else if (window->is_pressed('d')) {
+        moveRight(keySensitivity);
+    } else if (window->is_pressed('x')) {
+        moveUp(keySensitivity);
+    } else if (window->is_pressed('z')) {
+        moveUp(-keySensitivity);
+    }
     // update mouse
-    rotatePitch(-5.0);
-    printf("pitch=%f, yaw=%f\n", pitch, yaw);
 }
 
 void Camera::setFov(const float &degree) {

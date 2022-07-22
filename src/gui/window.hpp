@@ -21,6 +21,7 @@ public:
     int frames;
     unsigned char *framebuffer; // BGRA
     bool is_close;
+    int keyState = -1;
 
     std::function<void(int)> keyHandler;
     std::function<void(int, int, int)> mouseHandler;
@@ -35,7 +36,7 @@ public:
     double getSystemTime();
 
     void sendMessage();
-    bool is_pressed(char key);
+    bool is_pressed(char key) const;
     void setKeyHandler(std::function<void(int)> handler);
     void setMouseHandler(std::function<void(int, int, int)> handler);
     void setCursorPosition(int x, int y);

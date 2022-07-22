@@ -18,7 +18,14 @@ LRESULT WINAPI msg_callback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 window->is_close = true;
                 break;
             }
-            window->keyHandler(int(wParam));
+            break;
+        }
+        case WM_KEYDOWN: {
+            window->keyState = int(wParam);
+            break;
+        }
+        case WM_KEYUP: {
+            window->keyState = -1;
             break;
         }
         case WM_CLOSE: {
@@ -195,4 +202,12 @@ void Window::setCursorPosition(int x, int y) {
     POINT p = {x, y};
     ClientToScreen(wnd, &p);
     SetCursorPos(p.x, p.y);
+}
+
+bool Window::is_pressed(char key) const {
+    int code = static_cast<int>(key);
+    if (97 <= code && code <= 122) {
+        code -= 32;
+    }
+    return code == keyState;
 }
