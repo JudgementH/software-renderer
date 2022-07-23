@@ -3,6 +3,7 @@
 #include <Eigen/Eigen>
 #include "vertex.hpp"
 #include "payload.hpp"
+#include "light.hpp"
 
 class Shader {
 public:
@@ -28,5 +29,8 @@ public:
 
 class FragmentShader : public Shader {
 public:
+    std::vector<Light *> lights;
+    Eigen::Vector3f view_pos;
+
     virtual Eigen::Vector4f shade(const Payload &payload) = 0;
 };

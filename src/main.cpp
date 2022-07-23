@@ -5,6 +5,7 @@
 #include "core/model.hpp"
 #include "core/renderer.hpp"
 #include "core/camera.hpp"
+#include "core/scene.hpp"
 #include "gui/window.hpp"
 #include "shader/vertex_shader.hpp"
 #include "shader/normal_fragment_shader.hpp"
@@ -12,12 +13,12 @@
 
 int main() {
 
-
     int width = 1280;
     int height = 720;
     std::string title = "Software-renderer";
     Window window(width, height, title);
 
+    // create camera
     Eigen::Vector3f pos(-1.0f, 1.0f, -1.0f);
 //    Eigen::Vector3f pos(0.0f, 0.0f, 0.4f);
     Eigen::Vector3f lookat(0.0f, 0.0f, 0.0f);
@@ -25,6 +26,8 @@ int main() {
     float fov = 60.0f;
     Camera camera(&window, pos, lookat, up, fov);
 
+
+    // create model
     std::string obj_file_path = "models/spot/spot_triangulated_good.obj";
 //     std::string obj_file_path = "models/spot/spot_control_mesh.obj";
 //    std::string obj_file_path = "models/bunny/bunny.obj";
@@ -36,24 +39,26 @@ int main() {
 //    Texture texture("models/Crate/crate_1.jpg");
     model.setTexture(texture);
 
-    std::vector<Vertex> vertices = {Vertex(Eigen::Vector4f(0, 1, 0, 1)),
-                                    Vertex(Eigen::Vector4f(-1, -2, 0, 1)),
-                                    Vertex(Eigen::Vector4f(1, -2, 0, 1))};
+    // create light
+    DirectionLight dir_light;
+    dir_light.setDirection({-1.0f, -1.0f, 1.0f});
 
+    // create scene
+    Scene scene;
+    scene.add(&model);
+    scene.add(&dir_light);
+
+    // create rasterizer
     Rasterizer rasterizer(width, height, &camera);
     rasterizer.setRenderMode(RenderMode::FACE);
 
     std::unique_ptr<VertexShader> vs = std::make_unique<NaiveVertexShader>();
     rasterizer.setVertexShader(vs);
 
-
-//    std::unique_ptr<FragmentShader> fs = std::make_unique<NormalFragmentShader>();
     std::unique_ptr<FragmentShader> bpfs = std::make_unique<BlinnPhongFragmentShader>();
     rasterizer.setFragmentShader(bpfs);
 
     while (!window.is_close) {
-
-
         window.clear();
         rasterizer.clearDepthBuffer();
         rasterizer.clearFrameBuffer();
@@ -66,7 +71,8 @@ int main() {
         auto project = camera.getPerspectiveMatrix();
         rasterizer.setProjectMatrix(project);
 
-        auto buffer = rasterizer.render(model);
+//        auto buffer = rasterizer.render(model);
+        auto buffer = rasterizer.render(scene);
 
         window.setFramebuffer(buffer);
         window.draw();

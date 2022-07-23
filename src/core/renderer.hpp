@@ -10,6 +10,7 @@
 #include "payload.hpp"
 #include "model.hpp"
 #include "camera.hpp"
+#include "scene.hpp"
 
 class Renderer {
 public:
@@ -60,6 +61,8 @@ public:
     ~Rasterizer();
 
     std::vector<Eigen::Vector4f> &render(Model &model);
+
+    std::vector<Eigen::Vector4f> &render(Scene &scene);
 
     void drawLine(int x0, int y0, int x1, int y1, Eigen::Vector4f color);
 

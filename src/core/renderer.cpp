@@ -38,6 +38,18 @@ Rasterizer::Rasterizer(int width, int height, Camera *camera) : Rasterizer(width
 Rasterizer::~Rasterizer() {
 }
 
+
+std::vector<Eigen::Vector4f> &Rasterizer::render(Scene &scene) {
+    fragmentShader->view_pos = camera->position;
+    for (auto &light: scene.lights) {
+        fragmentShader->lights = scene.lights;
+    }
+    for (Model *model: scene.models) {
+        render(*model);
+    }
+    return framebuffer;
+}
+
 std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
     if (vertexShader == nullptr) {
         std::cout << "没有vertexShader" << std::endl;
@@ -106,6 +118,7 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
     return framebuffer;
 }
 
+
 void Rasterizer::renderVertex(Payload &p0, Payload &p1, Payload &p2) {
     setPixel(p0.windowPos.x(), p0.windowPos.y(), p0.color);
     setPixel(p1.windowPos.x(), p1.windowPos.y(), p1.color);
@@ -167,6 +180,10 @@ void Rasterizer::setPixel(int x, int y, Eigen::Vector4f color) {
         return;
     }
     int index = x + y * width;
+    color.x() = std::clamp(color.x(),0.0f,1.0f);
+    color.y() = std::clamp(color.y(),0.0f,1.0f);
+    color.z() = std::clamp(color.z(),0.0f,1.0f);
+    color.w() = std::clamp(color.w(),0.0f,1.0f);
     framebuffer[index] = color;
 }
 
@@ -255,7 +272,7 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
                       Vertex(payload2.windowPos, payload2.color, payload2.normal));
 
     // FaceCulling
-    if(triangle.crossBack(Eigen::Vector3f(0, 0, -1))){
+    if (triangle.crossBack(Eigen::Vector3f(0, 0, -1))) {
         return;
     }
 
@@ -291,6 +308,7 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
                     p.normal = Z * (w0 * payload0.normal / payload0.clipPos.w() +
                                     w1 * payload1.normal / payload1.clipPos.w() +
                                     w2 * payload2.normal / payload2.clipPos.w());
+                    p.normal.normalize();
 
                     p.color = Z * (w0 * payload0.color / payload0.clipPos.w() +
                                    w1 * payload1.color / payload1.clipPos.w() +

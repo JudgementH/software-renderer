@@ -3,6 +3,7 @@
 + x 上升
 + z 下降
 + 鼠标控制视角
++ ctrl+c 关闭程序
 
 # Package manager
 vcpkg
@@ -23,5 +24,9 @@ vcpkg
 
 # TODO
 + 多线程fragment shader
-+ 光照
-+ 输入卡顿
++ 天空盒
++ shadow
+
+# bug
++ 移动速度过快
++ 牛牛腿部纹理
