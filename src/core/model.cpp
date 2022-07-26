@@ -31,9 +31,9 @@ Model::Model(const std::string &filename) {
                               shape.indices[i].texcoord_index,
                               shape.indices[i].normal_index};
 
-                int position_index = indices[i].position_index;
-                int normal_index = indices[i].normal_index;
-                int texcoord_index = indices[i].texcoord_index;
+                int &position_index = indices[i].position_index;
+                int &normal_index = indices[i].normal_index;
+                int &texcoord_index = indices[i].texcoord_index;
 
                 position_list[position_index] = Eigen::Vector4f(shape.position_list[position_index].x,
                                                                 shape.position_list[position_index].y,
@@ -74,11 +74,11 @@ Triangle Model::getFace(int i) {
     Vertex v[3];
     for (int j = 0; j < 3; j++) {
         v[j].position = position_list[indices[index + j].position_index];
-        if (indices[index + j].normal_index > 0) {
+        if (indices[index + j].normal_index >= 0) {
             v[j].normal = normal_list[indices[index + j].normal_index];
         }
 
-        if (indices[index + j].texcoord_index > 0) {
+        if (indices[index + j].texcoord_index >= 0) {
             v[j].texcoord = texcoord_list[indices[index + j].texcoord_index];
         }
 

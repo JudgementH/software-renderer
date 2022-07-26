@@ -64,8 +64,6 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
         payloads.resize(3);
 
         // turn vertices from model space to NDC space
-        //TODO: 反而减速？
-//#pragma omp parallel for
         for (int i = 0; i < 3; i++) {
             payloads[i] = vertexShader->shade(face.vertices[i]);
         }
@@ -180,10 +178,10 @@ void Rasterizer::setPixel(int x, int y, Eigen::Vector4f color) {
         return;
     }
     int index = x + y * width;
-    color.x() = std::clamp(color.x(),0.0f,1.0f);
-    color.y() = std::clamp(color.y(),0.0f,1.0f);
-    color.z() = std::clamp(color.z(),0.0f,1.0f);
-    color.w() = std::clamp(color.w(),0.0f,1.0f);
+    color.x() = std::clamp(color.x(), 0.0f, 1.0f);
+    color.y() = std::clamp(color.y(), 0.0f, 1.0f);
+    color.z() = std::clamp(color.z(), 0.0f, 1.0f);
+    color.w() = std::clamp(color.w(), 0.0f, 1.0f);
     framebuffer[index] = color;
 }
 
@@ -266,7 +264,6 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
         std::cout << "fragmentShader 为空" << std::endl;
         throw std::exception();
     }
-
     Triangle triangle(Vertex(payload0.windowPos, payload0.color, payload0.normal),
                       Vertex(payload1.windowPos, payload1.color, payload1.normal),
                       Vertex(payload2.windowPos, payload2.color, payload2.normal));
@@ -321,6 +318,8 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
             }
         }
     }
+
+
 }
 
 void Rasterizer::setRenderMode(RenderMode mode) {

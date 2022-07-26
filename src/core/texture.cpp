@@ -8,7 +8,7 @@
 Texture::Texture(const std::string &path) {
     data = stbi_load(path.c_str(), &width, &height, &channels, 0);
     if (channels != 3) {
-        std::cout << "channels" << channels << std::endl;
+        std::cout << "In src/core/texture.cpp channels" << channels << std::endl;
         throw std::exception();
     }
 }
@@ -31,16 +31,18 @@ Texture::~Texture() {
 }
 
 Eigen::Vector4f Texture::getColor(float u, float v) {
+    u = std::clamp(u, 0.0f, 1.0f);
+    v = std::clamp(v, 0.0f, 1.0f);
     int x_img = u * width;
     int y_img = (1 - v) * height;
-    if (x_img < 0 || x_img > width || y_img < 0 || y_img > height) {
-        return Eigen::Vector4f::Zero();
-    }
+//    if (x_img < 0 || x_img > width || y_img < 0 || y_img > height) {
+//        return Eigen::Vector4f::Zero();
+//    }
     int index = channels * (x_img + y_img * width);
-    return Eigen::Vector4f(static_cast<float>(data[index]) / 255.0f,
-                           static_cast<float>(data[index + 1]) / 255.0f,
-                           static_cast<float>(data[index + 2]) / 255.0f,
-                           1.0f);
+    return {static_cast<float>(data[index]) / 255.0f,
+            static_cast<float>(data[index + 1]) / 255.0f,
+            static_cast<float>(data[index + 2]) / 255.0f,
+            1.0f};
 }
 
 Texture &Texture::operator=(const Texture &t) {

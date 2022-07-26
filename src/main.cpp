@@ -34,8 +34,10 @@ int main() {
 //    std::string obj_file_path = "models/Crate/Crate1.obj";
 //    std::string obj_file_path = "models/box/box.obj";
 
+
     Model model(obj_file_path);
     Texture texture("models/spot/spot_texture.png");
+//    Texture texture("models\\Crate\\test.jpg");
 //    Texture texture("models/Crate/crate_1.jpg");
     model.setTexture(texture);
 

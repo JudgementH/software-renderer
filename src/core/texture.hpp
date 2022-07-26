@@ -14,7 +14,7 @@ public:
 
     Texture(const std::string &path);
 
-    Texture(const Texture & t);
+    Texture(const Texture &t);
 
     ~Texture();
 
