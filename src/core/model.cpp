@@ -87,3 +87,57 @@ Triangle Model::getFace(int i) {
     return triangle;
 }
 
+void Model::setPosition(const Eigen::Vector3f &position) {
+    this->position = position;
+}
+
+void Model::setScale(float scale) {
+    this->scale = scale;
+}
+
+void Model::setPitch(float pitch) {
+    this->pitch = pitch;
+}
+
+void Model::setYaw(float yaw) {
+    this->yaw = yaw;
+}
+
+void Model::setRoll(float roll) {
+    this->roll = roll;
+}
+
+Eigen::Matrix4f Model::getModelMatrix() const {
+    Eigen::Matrix4f scaleMatrix;
+    scaleMatrix << scale, 0, 0, 0,
+            0, scale, 0, 0,
+            0, 0, scale, 0,
+            0, 0, 0, 1;
+
+    Eigen::Matrix4f pitchMatrix;
+    pitchMatrix << 1, 0, 0, 0,
+            0, std::cos(pitch), -std::sin(pitch), 0,
+            0, std::sin(pitch), std::cos(pitch), 0,
+            0, 0, 0, 1;
+
+    Eigen::Matrix4f yawMatrix;
+    yawMatrix << std::cos(yaw), 0, std::sin(yaw), 0,
+            0, 1, 0, 0,
+            -std::sin(yaw), 0, std::cos(yaw), 0,
+            0, 0, 0, 1;
+
+    Eigen::Matrix4f rollMatrix;
+    rollMatrix << std::cos(roll), -std::sin(roll), 0, 0,
+            std::sin(roll), std::cos(roll), 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1;
+
+    Eigen::Matrix4f transMatrix;
+    transMatrix << 1, 0, 0, position.x(),
+            0, 1, 0, position.y(),
+            0, 0, 1, position.z(),
+            0, 0, 0, 1;
+
+    return transMatrix * rollMatrix * yawMatrix * pitchMatrix * scaleMatrix;
+}
+

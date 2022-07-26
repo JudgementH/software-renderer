@@ -18,7 +18,9 @@ int main() {
     std::string title = "Software-renderer";
     Window window(width, height, title);
 
-    // create camera
+    /**
+     * create camera
+     */
     Eigen::Vector3f pos(-1.0f, 1.0f, -1.0f);
 //    Eigen::Vector3f pos(0.0f, 0.0f, 0.4f);
     Eigen::Vector3f lookat(0.0f, 0.0f, 0.0f);
@@ -27,30 +29,38 @@ int main() {
     Camera camera(&window, pos, lookat, up, fov);
 
 
-    // create model
+    /**
+     * create model
+     */
     std::string obj_file_path = "models/spot/spot_triangulated_good.obj";
-//     std::string obj_file_path = "models/spot/spot_control_mesh.obj";
+//    std::string obj_file_path = "models/spot/spot_control_mesh.obj";
 //    std::string obj_file_path = "models/bunny/bunny.obj";
 //    std::string obj_file_path = "models/Crate/Crate1.obj";
 //    std::string obj_file_path = "models/box/box.obj";
-
 
     Model model(obj_file_path);
     Texture texture("models/spot/spot_texture.png");
 //    Texture texture("models\\Crate\\test.jpg");
 //    Texture texture("models/Crate/crate_1.jpg");
     model.setTexture(texture);
+    model.setPosition({1.0, 1.0, 1.0});
 
-    // create light
+    /**
+     * create light
+     */
     DirectionLight dir_light;
     dir_light.setDirection({-1.0f, -1.0f, 1.0f});
 
-    // create scene
+    /**
+     * create scene
+     */
     Scene scene;
     scene.add(&model);
     scene.add(&dir_light);
 
-    // create rasterizer
+    /**
+     * create rasterizer
+     */
     Rasterizer rasterizer(width, height, &camera);
     rasterizer.setRenderMode(RenderMode::FACE);
 

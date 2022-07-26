@@ -55,7 +55,8 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
         std::cout << "没有vertexShader" << std::endl;
         throw std::exception();
     }
-
+    vertexShader->setModelMatrix(model.getModelMatrix());
+    
     //for every face
     for (int i = 0; i < model.face_num; i++) {
         Triangle face = model.getFace(i);

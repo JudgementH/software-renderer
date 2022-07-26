@@ -23,10 +23,9 @@ vcpkg
 
 
 # TODO
-+ 添加Model位置变换
++ shadow
 + 多线程fragment shader
 + 天空盒
-+ shadow
 
 # bug
 + 移动速度过快

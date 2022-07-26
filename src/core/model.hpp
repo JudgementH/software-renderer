@@ -7,14 +7,19 @@
 #include "triangle.hpp"
 #include "texture.hpp"
 
-struct Index{
+struct Index {
     int position_index;
     int texcoord_index;
     int normal_index;
 };
 
-class Model
-{
+class Model {
+private:
+    Eigen::Vector3f position = Eigen::Vector3f{0, 0, 0};
+    float scale = 1.0f;
+    float pitch = 0.0f;
+    float yaw = 0.0f;
+    float roll = 0.0f;
 public:
     int shape_num;
     int face_num;
@@ -24,9 +29,21 @@ public:
     std::vector<Index> indices;
     std::optional<Texture> texture = std::nullopt;
 
-    Model(const std::string& filename);
+    Model(const std::string &filename);
 
     void setTexture(Texture tex);
 
     Triangle getFace(int i);
+
+    void setPosition(const Eigen::Vector3f &position);
+
+    void setScale(float scale);
+
+    void setPitch(float pitch);
+
+    void setYaw(float yaw);
+
+    void setRoll(float roll);
+
+    Eigen::Matrix4f getModelMatrix() const;
 };
