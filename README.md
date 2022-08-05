@@ -26,6 +26,9 @@ vcpkg
 + shadow
 + 多线程fragment shader
 + 天空盒
++ package the matrix
++ turn the rotation to quaternion
 
 # bug
++ depth problem
 + 移动速度过快

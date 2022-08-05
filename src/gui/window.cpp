@@ -211,3 +211,7 @@ bool Window::is_pressed(char key) const {
     }
     return code == keyState;
 }
+
+bool Window::is_pressed(int key_code) const {
+    return key_code == keyState;
+}

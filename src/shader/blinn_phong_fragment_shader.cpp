@@ -1,7 +1,10 @@
 #include "blinn_phong_fragment_shader.hpp"
 
 Eigen::Vector4f BlinnPhongFragmentShader::shade(const Payload &payload) {
-    Eigen::Vector4f albedo = payload.texture->getColor(payload.texcood.x(), payload.texcood.y());
+    Eigen::Vector4f albedo{0.5, 0.5, 0.5, 1.0};
+    if (payload.texture != nullptr) {
+        albedo = payload.texture->getColor(payload.texcood.x(), payload.texcood.y());
+    }
     if (lights.empty()) {
         return albedo;
     }
@@ -21,5 +24,7 @@ Eigen::Vector4f BlinnPhongFragmentShader::shade(const Payload &payload) {
         color += (ambient + diffuse + specular).cwiseProduct(albedo);
     }
     color = color / lights.size();
+//    float depth = payload.windowPos.z() + 1;
+//    color = Eigen::Vector4f{depth, depth, depth, 1.0};
     return color;
 }

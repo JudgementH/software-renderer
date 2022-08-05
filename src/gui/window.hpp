@@ -37,6 +37,7 @@ public:
 
     void sendMessage();
     bool is_pressed(char key) const;
+    bool is_pressed(int key_code) const;
     void setKeyHandler(std::function<void(int)> handler);
     void setMouseHandler(std::function<void(int, int, int)> handler);
     void setCursorPosition(int x, int y);

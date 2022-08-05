@@ -38,12 +38,19 @@ int main() {
 //    std::string obj_file_path = "models/Crate/Crate1.obj";
 //    std::string obj_file_path = "models/box/box.obj";
 
+    std::string floor_file_path = "models/floor/floor.obj";
+
     Model model(obj_file_path);
     Texture texture("models/spot/spot_texture.png");
 //    Texture texture("models\\Crate\\test.jpg");
 //    Texture texture("models/Crate/crate_1.jpg");
     model.setTexture(texture);
     model.setPosition({1.0, 1.0, 1.0});
+
+    Model floor(floor_file_path);
+    floor.setTexture(Texture{"models/floor/checker.png"});
+    floor.setScale(0.1);
+
 
     /**
      * create light
@@ -56,6 +63,7 @@ int main() {
      */
     Scene scene;
     scene.add(&model);
+    scene.add(&floor);
     scene.add(&dir_light);
 
     /**

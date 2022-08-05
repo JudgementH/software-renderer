@@ -43,6 +43,7 @@ Camera::Camera(Window *window,
 
 void Camera::update() {
     // update key
+//    std::cout << "pressed: " << window->keyState << std::endl;
     if (window->is_pressed('w')) {
         moveForward(keySensitivity);
     } else if (window->is_pressed('a')) {
