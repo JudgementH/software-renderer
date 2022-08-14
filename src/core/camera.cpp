@@ -149,9 +149,9 @@ void Camera::mouseHandle(int param, int x, int y) {
     int centerY = window->height / 2.0f;
     int dx = x - centerX;
     int dy = centerY - y;
-    rotatePitch(-dy * mouseSensitivity);
-    rotateYaw(-dx * mouseSensitivity);
-    window->setCursorPosition(centerX, centerY);
+//    rotatePitch(-dy * mouseSensitivity);
+//    rotateYaw(-dx * mouseSensitivity);
+//    window->setCursorPosition(centerX, centerY);
 }
 
 

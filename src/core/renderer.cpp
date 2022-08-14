@@ -56,7 +56,7 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
         throw std::exception();
     }
     vertexShader->setModelMatrix(model.getModelMatrix());
-    
+
     //for every face
     for (int i = 0; i < model.face_num; i++) {
         Triangle face = model.getFace(i);
@@ -269,6 +269,7 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
                       Vertex(payload1.windowPos, payload1.color, payload1.normal),
                       Vertex(payload2.windowPos, payload2.color, payload2.normal));
 
+
     // FaceCulling
     if (triangle.crossBack(Eigen::Vector3f(0, 0, -1))) {
         return;
@@ -285,6 +286,7 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
     for (int y = boxMinY; y <= boxMaxY; y++) {
         for (int x = boxMinX; x <= boxMaxX; x++) {
 
+
             if (triangle.inside(x, y)) {
                 auto[w0, w1, w2] = triangle.computeBarycentric2D(x, y);
                 float Z = 1 / (w0 / payload0.clipPos.w() + w1 / payload1.clipPos.w() + w2 / payload2.clipPos.w());
@@ -295,7 +297,7 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
                                    w1 * payload1.windowPos.z() / payload1.clipPos.w() +
                                    w2 * payload2.windowPos.z() / payload2.clipPos.w()) * Z;
 
-                //深度测试
+                // deep test
                 if (p.windowPos.z() > getDepth(x, y)) {
                     setDepth(x, y, p.windowPos.z());
 
@@ -314,7 +316,13 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
 
 
                     Eigen::Vector4f color = fragmentShader->shade(p);
-                    setPixel(x, y, color);
+
+                    if (580 < x && x < 700
+                        && 600 < y && y < 650) {
+
+                        setPixel(x, y, color);
+                    }
+
                 }
             }
         }
