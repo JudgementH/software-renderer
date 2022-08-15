@@ -47,10 +47,12 @@ public:
     float aspect_ratio;
     std::vector<Eigen::Vector4f> framebuffer;
     std::vector<float> zBuffer;
+    std::vector<Eigen::Vector4f> shadowMap;
 
     Camera *camera;
     std::unique_ptr<VertexShader> vertexShader;
     std::unique_ptr<FragmentShader> fragmentShader;
+    std::unique_ptr<FragmentShader> shadowShader;
 
     Eigen::Matrix4f viewPortMatrix; // NDC to screen space
 
@@ -73,6 +75,8 @@ public:
     void setVertexShader(std::unique_ptr<VertexShader> &vs);
 
     void setFragmentShader(std::unique_ptr<FragmentShader> &fs);
+
+    void setShadowShader(std::unique_ptr<FragmentShader> &ss);
 
     void setViewMatrix(Eigen::Matrix4f &view);
 

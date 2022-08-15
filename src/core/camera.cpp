@@ -57,7 +57,17 @@ void Camera::update() {
     } else if (window->is_pressed('z')) {
         moveUp(-keySensitivity);
     }
+
+
     // update mouse
+    int centerX = window->width / 2.0f;
+    int centerY = window->height / 2.0f;
+    int dx = window->cursor_x - centerX;
+    int dy = centerY - window->cursor_y;
+    rotatePitch(-dy * mouseSensitivity);
+    rotateYaw(-dx * mouseSensitivity);
+    window->setCursorPosition(centerX, centerY);
+
 }
 
 void Camera::setFov(const float &degree) {

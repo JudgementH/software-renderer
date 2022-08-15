@@ -10,6 +10,7 @@
 #include "shader/vertex_shader.hpp"
 #include "shader/normal_fragment_shader.hpp"
 #include "shader/blinn_phong_fragment_shader.hpp"
+#include "shader/shadow_shader.hpp"
 
 int main() {
 
@@ -53,13 +54,14 @@ int main() {
 
     Model test_floor(floor_file_path);
     test_floor.setTexture(Texture{"models/floor/checker.png"});
-    test_floor.setPosition({0.0,0.2,0.0});
+    test_floor.setPosition({0.0, 0.2, 0.0});
     test_floor.setScale(0.1);
 
     /**
      * create light
      */
     DirectionLight dir_light;
+    dir_light.setPosition({-5.0f, 5.0f, -5.0f});
     dir_light.setDirection({-1.0f, -1.0f, 1.0f});
 
     /**
@@ -82,18 +84,15 @@ int main() {
     std::unique_ptr<FragmentShader> bpfs = std::make_unique<BlinnPhongFragmentShader>();
     rasterizer.setFragmentShader(bpfs);
 
+    std::unique_ptr<FragmentShader> shadowShader = std::make_unique<ShadowShader>();
+    rasterizer.setShadowShader(shadowShader);
+
     while (!window.is_close) {
         window.clear();
         rasterizer.clearDepthBuffer();
         rasterizer.clearFrameBuffer();
 
         camera.update();
-
-        auto view = camera.getViewMatrix();
-        rasterizer.setViewMatrix(view);
-
-        auto project = camera.getPerspectiveMatrix();
-        rasterizer.setProjectMatrix(project);
 
 //        auto buffer = rasterizer.render(model);
         auto buffer = rasterizer.render(scene);

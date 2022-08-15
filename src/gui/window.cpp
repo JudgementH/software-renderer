@@ -10,7 +10,9 @@ LRESULT WINAPI msg_callback(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return DefWindowProc(hWnd, msg, wParam, lParam);
     switch (msg) {
         case WM_MOUSEMOVE: {
-            window->mouseHandler(int(wParam), int(LOWORD(lParam)), int(HIWORD(lParam)));
+//            window->mouseHandler(int(wParam), int(LOWORD(lParam)), int(HIWORD(lParam)));
+            window->cursor_x = int(LOWORD(lParam));
+            window->cursor_y = int(HIWORD(lParam));
             break;
         }
         case WM_CHAR: {

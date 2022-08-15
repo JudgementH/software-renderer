@@ -22,6 +22,8 @@ public:
     unsigned char *framebuffer; // BGRA
     bool is_close;
     int keyState = -1;
+    int cursor_x = width / 2.0;
+    int cursor_y = height / 2.0;
 
     std::function<void(int)> keyHandler;
     std::function<void(int, int, int)> mouseHandler;

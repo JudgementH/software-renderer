@@ -1,4 +1,5 @@
 #include <omp.h>
+#include<limits>
 #include "renderer.hpp"
 #include "payload.hpp"
 
@@ -41,6 +42,37 @@ Rasterizer::~Rasterizer() {
 
 std::vector<Eigen::Vector4f> &Rasterizer::render(Scene &scene) {
     fragmentShader->view_pos = camera->position;
+
+    if (shadowShader != nullptr) {
+        Camera *ctx_camera = camera;
+        if (scene.lights.size() > 1) {
+            std::cout << "只能处理只有一个光源的情况" << std::endl;
+            throw std::exception();
+        }
+
+        camera = new Camera(camera->window, scene.lights[0]->getPosition(fragmentShader->view_pos), camera->position,
+                            camera->worldUp, camera->fov);
+        auto view = camera->getViewMatrix();
+        setViewMatrix(view);
+        auto project = camera->getPerspectiveMatrix();
+        setProjectMatrix(project);
+
+        for (Model *model: scene.models) {
+            shadowMap = render(*model);
+        }
+
+        delete camera;
+        clearDepthBuffer();
+        clearFrameBuffer();
+        camera = ctx_camera;
+    }
+
+    auto view = camera->getViewMatrix();
+    setViewMatrix(view);
+
+    auto project = camera->getPerspectiveMatrix();
+    setProjectMatrix(project);
+
     for (auto &light: scene.lights) {
         fragmentShader->lights = scene.lights;
     }
@@ -92,6 +124,10 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
             if (model.texture) {
                 ps[j].texture = &*model.texture;
             }
+
+            //shadow map
+            //TODO: add shadow map to payload
+
         }
 
         // rasterization
@@ -149,6 +185,10 @@ void Rasterizer::setFragmentShader(std::unique_ptr<FragmentShader> &fs) {
     fragmentShader = std::move(fs);
 }
 
+void Rasterizer::setShadowShader(std::unique_ptr<FragmentShader> &ss) {
+    shadowShader = std::move(ss);
+}
+
 void Rasterizer::setViewMatrix(Eigen::Matrix4f &view) {
     vertexShader->setViewMatrix(view);
 }
@@ -162,7 +202,7 @@ void Rasterizer::clearFrameBuffer() {
 }
 
 void Rasterizer::clearDepthBuffer() {
-    std::fill(zBuffer.begin(), zBuffer.end(), -100000.0f);
+    std::fill(zBuffer.begin(), zBuffer.end(), std::numeric_limits<float>::lowest());
 }
 
 void Rasterizer::setPixel(int x, int y, Eigen::Vector4f color) {
@@ -294,11 +334,11 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
                 Payload p = alpha * payload0 + beta * payload1 + gamma * payload2;
 
                 // Perspective Correction
-                p.worldPos.z() = (alpha * payload0.windowPos.z() / payload0.clipPos.w() +
-                                  beta * payload1.windowPos.z() / payload1.clipPos.w() +
-                                  gamma * payload2.windowPos.z() / payload2.clipPos.w()) * Z;
+//                p.windowPos.z() = (alpha * payload0.windowPos.z() / payload0.clipPos.w() +
+//                                  beta * payload1.windowPos.z() / payload1.clipPos.w() +
+//                                  gamma * payload2.windowPos.z() / payload2.clipPos.w()) * Z;
                 // deep test
-                float depth = p.viewPos.z();
+                float depth = p.windowPos.z();
                 if (depth > getDepth(x, y)) {
                     setDepth(x, y, depth);
 
@@ -318,17 +358,6 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
 
                     Eigen::Vector4f color = fragmentShader->shade(p);
                     setPixel(x, y, color);
-
-//                    if (619 <= x && x <= 622 &&
-//                        608 <= y && y <= 610) {
-//                        std::cout << "aaaa" << std::endl;
-//                    }
-//
-//                    if (580 < x && x < 700
-//                        && 600 < y && y < 650) {
-//
-//                        setPixel(x, y, color);
-//                    }
 
                 }
             }

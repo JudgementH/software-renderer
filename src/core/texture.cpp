@@ -24,6 +24,11 @@ Texture::Texture(const Texture &t) {
     }
 }
 
+Texture::Texture(const std::vector<Eigen::Vector4f> color) {
+    //TODO::实现从Eigen中读取颜色
+
+}
+
 Texture::~Texture() {
     if (data != nullptr) {
         stbi_image_free(data);
@@ -55,3 +60,5 @@ Texture &Texture::operator=(const Texture &t) {
     }
     return *this;
 }
+
+
