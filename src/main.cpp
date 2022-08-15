@@ -21,7 +21,7 @@ int main() {
     /**
      * create camera
      */
-    Eigen::Vector3f pos(-1.0f, 1.0f, -1.0f);
+    Eigen::Vector3f pos(4.0f, 1.5f, 4.0f);
 //    Eigen::Vector3f pos(0.0f, 0.0f, 0.4f);
     Eigen::Vector3f lookat(0.0f, 0.0f, 0.0f);
     Eigen::Vector3f up(0.0f, 1.0f, 0.0f);
@@ -51,6 +51,10 @@ int main() {
     floor.setTexture(Texture{"models/floor/checker.png"});
     floor.setScale(0.1);
 
+    Model test_floor(floor_file_path);
+    test_floor.setTexture(Texture{"models/floor/checker.png"});
+    test_floor.setPosition({0.0,0.2,0.0});
+    test_floor.setScale(0.1);
 
     /**
      * create light

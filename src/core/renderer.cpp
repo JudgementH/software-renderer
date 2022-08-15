@@ -21,8 +21,8 @@ Rasterizer::Rasterizer(int width, int height) : width(width), height(height) {
     aspect_ratio = static_cast<float>(width) / height;
     framebuffer.resize(width * height);
     zBuffer.resize(width * height);
-    std::fill(framebuffer.begin(), framebuffer.end(), Eigen::Vector4f(0, 0, 0, 0));
-    std::fill(zBuffer.begin(), zBuffer.end(), -1.0f);
+    clearFrameBuffer();
+    clearDepthBuffer();
 
     viewPortMatrix = math::GetViewPortMatrix(width, height);
 
@@ -77,8 +77,7 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
         if (!camera->inFrustum(p0.clipPos, p1.clipPos, p2.clipPos)) {
             continue;
         }
-
-        // Homogeneous Space Clipping
+        //viewport culling and Homogeneous Space Clipping
         std::vector<Payload> ps = clipHomogeneous(p0, p1, p2);
         if (ps.empty()) {
             continue;
@@ -163,7 +162,7 @@ void Rasterizer::clearFrameBuffer() {
 }
 
 void Rasterizer::clearDepthBuffer() {
-    std::fill(zBuffer.begin(), zBuffer.end(), -1.0f);
+    std::fill(zBuffer.begin(), zBuffer.end(), -100000.0f);
 }
 
 void Rasterizer::setPixel(int x, int y, Eigen::Vector4f color) {
@@ -287,41 +286,49 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
         for (int x = boxMinX; x <= boxMaxX; x++) {
 
 
-            if (triangle.inside(x, y)) {
-                auto[w0, w1, w2] = triangle.computeBarycentric2D(x, y);
-                float Z = 1 / (w0 / payload0.clipPos.w() + w1 / payload1.clipPos.w() + w2 / payload2.clipPos.w());
-                Payload p = w0 * payload0 + w1 * payload1 + w2 * payload2;
+            if (triangle.inside(x + 0.5, y + 0.5)) {
+                auto[alpha, beta, gamma] = triangle.computeBarycentric2D(x + 0.5, y + 0.5);
+                float Z = 1 / (alpha / payload0.clipPos.w() +
+                               beta / payload1.clipPos.w() +
+                               gamma / payload2.clipPos.w());
+                Payload p = alpha * payload0 + beta * payload1 + gamma * payload2;
 
                 // Perspective Correction
-                p.windowPos.z() = (w0 * payload0.windowPos.z() / payload0.clipPos.w() +
-                                   w1 * payload1.windowPos.z() / payload1.clipPos.w() +
-                                   w2 * payload2.windowPos.z() / payload2.clipPos.w()) * Z;
-
+                p.worldPos.z() = (alpha * payload0.windowPos.z() / payload0.clipPos.w() +
+                                  beta * payload1.windowPos.z() / payload1.clipPos.w() +
+                                  gamma * payload2.windowPos.z() / payload2.clipPos.w()) * Z;
                 // deep test
-                if (p.windowPos.z() > getDepth(x, y)) {
-                    setDepth(x, y, p.windowPos.z());
+                float depth = p.viewPos.z();
+                if (depth > getDepth(x, y)) {
+                    setDepth(x, y, depth);
 
-                    p.texcood = Z * (w0 * payload0.texcood / payload0.clipPos.w() +
-                                     w1 * payload1.texcood / payload1.clipPos.w() +
-                                     w2 * payload2.texcood / payload2.clipPos.w());
+                    p.texcood = Z * (alpha * payload0.texcood / payload0.clipPos.w() +
+                                     beta * payload1.texcood / payload1.clipPos.w() +
+                                     gamma * payload2.texcood / payload2.clipPos.w());
 
-                    p.normal = Z * (w0 * payload0.normal / payload0.clipPos.w() +
-                                    w1 * payload1.normal / payload1.clipPos.w() +
-                                    w2 * payload2.normal / payload2.clipPos.w());
+                    p.normal = Z * (alpha * payload0.normal / payload0.clipPos.w() +
+                                    beta * payload1.normal / payload1.clipPos.w() +
+                                    gamma * payload2.normal / payload2.clipPos.w());
                     p.normal.normalize();
 
-                    p.color = Z * (w0 * payload0.color / payload0.clipPos.w() +
-                                   w1 * payload1.color / payload1.clipPos.w() +
-                                   w2 * payload2.color / payload2.clipPos.w());
+                    p.color = Z * (alpha * payload0.color / payload0.clipPos.w() +
+                                   beta * payload1.color / payload1.clipPos.w() +
+                                   gamma * payload2.color / payload2.clipPos.w());
 
 
                     Eigen::Vector4f color = fragmentShader->shade(p);
+                    setPixel(x, y, color);
 
-                    if (580 < x && x < 700
-                        && 600 < y && y < 650) {
-
-                        setPixel(x, y, color);
-                    }
+//                    if (619 <= x && x <= 622 &&
+//                        608 <= y && y <= 610) {
+//                        std::cout << "aaaa" << std::endl;
+//                    }
+//
+//                    if (580 < x && x < 700
+//                        && 600 < y && y < 650) {
+//
+//                        setPixel(x, y, color);
+//                    }
 
                 }
             }

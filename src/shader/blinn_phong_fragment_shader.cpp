@@ -24,7 +24,5 @@ Eigen::Vector4f BlinnPhongFragmentShader::shade(const Payload &payload) {
         color += (ambient + diffuse + specular).cwiseProduct(albedo);
     }
     color = color / lights.size();
-//    float depth = payload.windowPos.z() + 1;
-//    color = Eigen::Vector4f{depth, depth, depth, 1.0};
     return color;
 }

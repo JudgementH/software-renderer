@@ -43,8 +43,8 @@ namespace math {
         float right = top * aspect;
         float left = -right;
         Eigen::Matrix4f P;
-        P << (2 * n) / (right - left), 0, -(right + left) / (right - left), 0,
-                0, (2 * n) / (top - bottom), -(top + bottom) / (top - bottom), 0,
+        P << (2 * n) / (right - left), 0, 0, 0,
+                0, (2 * n) / (top - bottom), 0, 0,
                 0, 0, (n + f) / (n - f), -(2 * n * f) / (n - f),
                 0, 0, 1, 0;
         return P;

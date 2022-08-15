@@ -17,9 +17,9 @@ Triangle::Triangle(Vertex v0, Vertex v1, Vertex v2) {
 
     //normal
     Eigen::Vector3f ab = vertices[1].position.head<3>() - vertices[0].position.head<3>();
-    Eigen::Vector3f bc = vertices[2].position.head<3>() - vertices[0].position.head<3>();
+    Eigen::Vector3f ac = vertices[2].position.head<3>() - vertices[0].position.head<3>();
 
-    normal = ab.cross(bc).normalized();
+    normal = ab.cross(ac).normalized();
 }
 
 bool Triangle::inside(float x, float y) const {

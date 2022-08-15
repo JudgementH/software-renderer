@@ -30,5 +30,7 @@ vcpkg
 + turn the rotation to quaternion
 
 # bug
-+ depth problem
 + 移动速度过快
+
+# attention
++ 使用深度测试，不要使用NDC空间中的z进行深度测试。由于是NDC的z是非线性的变化得到的，会导致中间点的z坐标实质上向相机靠近，就出错了。使用MV矩阵得到的z进行深度测试就没问题。
