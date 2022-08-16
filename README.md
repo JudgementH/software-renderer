@@ -29,7 +29,6 @@ vcpkg
 + Shadow Map
 
 # TODO
-+ shadow
 + 多线程fragment shader
 + 天空盒
 + package the matrix
