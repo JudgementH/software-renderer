@@ -46,23 +46,20 @@ int main() {
 //    Texture texture("models\\Crate\\test.jpg");
 //    Texture texture("models/Crate/crate_1.jpg");
     model.setTexture(texture);
-    model.setPosition({1.0, 1.0, 1.0});
+    model.setPosition({1.0, 1.0, -1.0});
 
     Model floor(floor_file_path);
     floor.setTexture(Texture{"models/floor/checker.png"});
     floor.setScale(0.1);
 
-    Model test_floor(floor_file_path);
-    test_floor.setTexture(Texture{"models/floor/checker.png"});
-    test_floor.setPosition({0.0, 0.2, 0.0});
-    test_floor.setScale(0.1);
 
     /**
      * create light
      */
     DirectionLight dir_light;
-    dir_light.setPosition({-5.0f, 5.0f, -5.0f});
-    dir_light.setDirection({-1.0f, -1.0f, 1.0f});
+    Eigen::Vector3f light_dir{-1.0f, -1.0f, 1.0f};
+    dir_light.setPosition(-light_dir * 3);
+    dir_light.setDirection(light_dir);
 
     /**
      * create scene

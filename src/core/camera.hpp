@@ -23,7 +23,7 @@ public:
     Eigen::Vector3f worldUp;
     float fov; // field of vertical view
     float aspect;
-    float n = -0.1; // near
+    float n = -1.0; // near
     float f = -50.0;   // far
 
     float pitch;
@@ -41,6 +41,8 @@ public:
     Eigen::Matrix4f getViewMatrix();
 
     Eigen::Matrix4f getPerspectiveMatrix() const;
+
+    Eigen::Matrix4f getOrthographicMatrix() const;
 
     void setFov(const float &degree);
 

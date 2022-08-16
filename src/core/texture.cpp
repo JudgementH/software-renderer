@@ -24,14 +24,23 @@ Texture::Texture(const Texture &t) {
     }
 }
 
-Texture::Texture(const std::vector<Eigen::Vector4f> color) {
-    //TODO::实现从Eigen中读取颜色
-
+Texture::Texture(const std::vector<Eigen::Vector4f> &color_map, const int &width, const int &height) {
+    this->width = width;
+    this->height = height;
+    channels = 3;
+    data = (unsigned char *) malloc(width * height * channels);
+    for (int i = 0; i < color_map.size(); i++) {
+        int index = i * 3;
+        *(data + index) = int(color_map[i].x() * 255 * color_map[i].w());
+        *(data + index + 1) = int(color_map[i].y() * 255 * color_map[i].w());
+        *(data + index + 2) = int(color_map[i].z() * 255 * color_map[i].w());
+    }
 }
 
 Texture::~Texture() {
     if (data != nullptr) {
-        stbi_image_free(data);
+        std::free(data);
+//        stbi_image_free(data);
     }
 }
 
@@ -48,6 +57,19 @@ Eigen::Vector4f Texture::getColor(float u, float v) {
             static_cast<float>(data[index + 1]) / 255.0f,
             static_cast<float>(data[index + 2]) / 255.0f,
             1.0f};
+}
+
+std::vector<Eigen::Vector4f> Texture::getColorMap() const {
+    std::vector<Eigen::Vector4f> color_map;
+    color_map.resize(width * height);
+    for (int i = 0; i < width * height * 3; i += 3) {
+        int idx = i / 3;
+        color_map[idx] = {static_cast<float>(data[i]) / 255.0f,
+                          static_cast<float>(data[i + 1]) / 255.0f,
+                          static_cast<float>(data[i + 2]) / 255.0f,
+                          1.0f};
+    }
+    return color_map;
 }
 
 Texture &Texture::operator=(const Texture &t) {

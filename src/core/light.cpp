@@ -25,7 +25,7 @@ Eigen::Vector3f DirectionLight::getDirection(const Eigen::Vector3f &view_pos) {
 }
 
 Eigen::Vector3f DirectionLight::getPosition(const Eigen::Vector3f &view_pos) {
-    return view_pos + -direction * 10;
+    return position;
 }
 
 Eigen::Vector3f PointLight::getDirection(const Eigen::Vector3f &view_pos) {

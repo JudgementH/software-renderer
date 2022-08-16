@@ -40,31 +40,46 @@ Rasterizer::~Rasterizer() {
 }
 
 
-std::vector<Eigen::Vector4f> &Rasterizer::render(Scene &scene) {
+std::vector<Eigen::Vector4f> Rasterizer::render(Scene &scene) {
     fragmentShader->view_pos = camera->position;
 
     if (shadowShader != nullptr) {
+        // save the context
         Camera *ctx_camera = camera;
+        auto view_pos = fragmentShader->view_pos;
+        std::unique_ptr<FragmentShader> ctx_shader = std::move(fragmentShader);
+
         if (scene.lights.size() > 1) {
             std::cout << "只能处理只有一个光源的情况" << std::endl;
             throw std::exception();
         }
-
-        camera = new Camera(camera->window, scene.lights[0]->getPosition(fragmentShader->view_pos), camera->position,
+        camera = new Camera(camera->window, scene.lights[0]->getPosition(camera->position),
+                            {0, 0, 0},
                             camera->worldUp, camera->fov);
+        fragmentShader = std::move(shadowShader);
+
         auto view = camera->getViewMatrix();
         setViewMatrix(view);
         auto project = camera->getPerspectiveMatrix();
         setProjectMatrix(project);
+        lightVP = project * view;
 
         for (Model *model: scene.models) {
-            shadowMap = render(*model);
+            render(*model);
         }
 
+        std::unique_ptr<Texture> shadow_texture = std::make_unique<Texture>(framebuffer, width, height);
+        shadowMap = std::move(shadow_texture);
+
         delete camera;
+
+//        return framebuffer;
+
         clearDepthBuffer();
         clearFrameBuffer();
         camera = ctx_camera;
+        shadowShader = std::move(fragmentShader);
+        fragmentShader = std::move(ctx_shader);
     }
 
     auto view = camera->getViewMatrix();
@@ -80,6 +95,7 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Scene &scene) {
         render(*model);
     }
     return framebuffer;
+//    return shadowMap->getColorMap();
 }
 
 std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
@@ -127,6 +143,10 @@ std::vector<Eigen::Vector4f> &Rasterizer::render(Model &model) {
 
             //shadow map
             //TODO: add shadow map to payload
+            if (shadowMap != nullptr) {
+                ps[j].shadow = shadowMap.get();
+            }
+
 
         }
 
@@ -331,30 +351,27 @@ void Rasterizer::drawTriangle(const Payload &payload0, const Payload &payload1, 
                 float Z = 1 / (alpha / payload0.clipPos.w() +
                                beta / payload1.clipPos.w() +
                                gamma / payload2.clipPos.w());
-                Payload p = alpha * payload0 + beta * payload1 + gamma * payload2;
+                auto alpha_ = alpha / payload0.clipPos.w() * Z;
+                auto beta_ = beta / payload1.clipPos.w() * Z;
+                auto gamma_ = gamma / payload2.clipPos.w() * Z;
+                Payload p = alpha_ * payload0 + beta_ * payload1 + gamma_ * payload2;
+                p.normal.normalized();
+
+                if (shadowMap != nullptr) {
+                    p.lightPos = lightVP * p.worldPos;
+                    p.lightPos = p.lightPos / p.lightPos.w();
+                    p.lightPos = (p.lightPos + Eigen::Vector4f::Ones()) / 2.0;
+                }
 
                 // Perspective Correction
 //                p.windowPos.z() = (alpha * payload0.windowPos.z() / payload0.clipPos.w() +
 //                                  beta * payload1.windowPos.z() / payload1.clipPos.w() +
 //                                  gamma * payload2.windowPos.z() / payload2.clipPos.w()) * Z;
+
                 // deep test
-                float depth = p.windowPos.z();
+                float depth = p.viewPos.z();
                 if (depth > getDepth(x, y)) {
                     setDepth(x, y, depth);
-
-                    p.texcood = Z * (alpha * payload0.texcood / payload0.clipPos.w() +
-                                     beta * payload1.texcood / payload1.clipPos.w() +
-                                     gamma * payload2.texcood / payload2.clipPos.w());
-
-                    p.normal = Z * (alpha * payload0.normal / payload0.clipPos.w() +
-                                    beta * payload1.normal / payload1.clipPos.w() +
-                                    gamma * payload2.normal / payload2.clipPos.w());
-                    p.normal.normalize();
-
-                    p.color = Z * (alpha * payload0.color / payload0.clipPos.w() +
-                                   beta * payload1.color / payload1.clipPos.w() +
-                                   gamma * payload2.color / payload2.clipPos.w());
-
 
                     Eigen::Vector4f color = fragmentShader->shade(p);
                     setPixel(x, y, color);

@@ -151,7 +151,8 @@ void Window::setFramebuffer(const unsigned char *buffer) {
 
 void Window::setFramebuffer(const std::vector<Eigen::Vector4f> &buffer, bool invertY) {
     if (buffer.size() != width * height) {
-        throw "缓冲大小和屏幕大小不匹配";
+        std::cout << "缓冲大小和屏幕大小不匹配" << std::endl;
+        throw std::exception();
     }
     for (int i = 0; i < buffer.size(); i++) {
         int x = i % width;

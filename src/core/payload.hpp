@@ -13,7 +13,9 @@ public:
     Eigen::Vector4f color = Eigen::Vector4f::Ones();
     Eigen::Vector3f normal = Eigen::Vector3f::Zero();
     Eigen::Vector2f texcood = Eigen::Vector2f::Zero();
-    Texture* texture = nullptr;
+    Texture *texture = nullptr;
+    Texture *shadow = nullptr;
+    Eigen::Vector4f lightPos;
 
     Payload() = default;
 

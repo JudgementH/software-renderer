@@ -96,6 +96,11 @@ Eigen::Matrix4f Camera::getPerspectiveMatrix() const {
     return math::GetPerspectiveMatrix(n, f, fov, aspect);
 }
 
+Eigen::Matrix4f Camera::getOrthographicMatrix() const {
+    //TODO: 正交投影的视锥裁剪有bug
+    return math::GetOrthographicMatrix(n, f, fov, aspect);
+}
+
 void Camera::moveForward(float distance) {
     position += -z * distance;
 }

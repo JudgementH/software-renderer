@@ -47,7 +47,8 @@ public:
     float aspect_ratio;
     std::vector<Eigen::Vector4f> framebuffer;
     std::vector<float> zBuffer;
-    std::vector<Eigen::Vector4f> shadowMap;
+    std::unique_ptr<Texture> shadowMap = nullptr;
+    Eigen::Matrix4f lightVP;
 
     Camera *camera;
     std::unique_ptr<VertexShader> vertexShader;
@@ -64,7 +65,7 @@ public:
 
     std::vector<Eigen::Vector4f> &render(Model &model);
 
-    std::vector<Eigen::Vector4f> &render(Scene &scene);
+    std::vector<Eigen::Vector4f> render(Scene &scene);
 
     void drawLine(int x0, int y0, int x1, int y1, Eigen::Vector4f color);
 
